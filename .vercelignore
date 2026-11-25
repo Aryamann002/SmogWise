@@ -1,0 +1,9 @@
+# Upload only what the container build needs, so secrets and local files never leave the machine.
+/*
+!Dockerfile
+!.dockerignore
+!requirements.txt
+!vercel.json
+!app
+!static
+__pycache__/

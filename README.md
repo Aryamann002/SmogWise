@@ -109,7 +109,20 @@ pytest tests/test_impact.py::test_commute_switch_saving   # a single test
 
 The tests never touch the network. Open-Meteo is mocked with `httpx.MockTransport`, and Gemini and the data client are replaced through FastAPI dependency overrides and injected fakes.
 
-## Deploy to Cloud Run
+## Deploy
+
+The same `Dockerfile` runs on Vercel and on Cloud Run.
+
+**Vercel.** `vercel.json` runs the Dockerfile as a container service, and `.vercelignore` uploads only the files the build needs.
+
+```bash
+vercel link --project smogwise
+vercel env add GEMINI_API_KEY production --sensitive
+printf 8080 | vercel env add PORT production
+vercel deploy --prod
+```
+
+**Cloud Run.**
 
 ```bash
 echo -n "$GEMINI_API_KEY" | gcloud secrets create gemini-key --data-file=-
