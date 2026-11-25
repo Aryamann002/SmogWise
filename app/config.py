@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Final
 
-DEFAULT_GEMINI_MODEL: Final = "gemini-3.8-flash"
-DEFAULT_GEMINI_TIMEOUT_S: Final = 15.0
+DEFAULT_GEMINI_MODEL: Final = "gemini-3.6-flash"
+DEFAULT_GEMINI_TIMEOUT_S: Final = 25.0
 DEFAULT_RATE_LIMIT_PER_MINUTE: Final = 20
 
 

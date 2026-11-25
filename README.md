@@ -75,7 +75,7 @@ AQI uses the US EPA 2024 PM2.5 breakpoints, or the India CPCB 2014 breakpoints f
 
 - **One shared HTTP client:** a single `httpx.AsyncClient` serves all outbound requests.
 - **Caching:** TTL plus LRU caches hold air quality (30 minutes, coordinates rounded to about 1 km), geocoding (24 hours) and Gemini plans (15 minutes).
-- **Gemini cost:** one Gemini call per plan, at low thinking level, with a hard 15-second timeout.
+- **Gemini cost:** one Gemini call per plan, at low thinking level, with a hard 25-second timeout.
 - **Small, compressed frontend:** GZip responses, and three static files with no framework, no images and no build step.
 
 ## Accessibility
@@ -122,6 +122,6 @@ gcloud run deploy smogwise --source . --region asia-south1 \
 | Variable | Default | Purpose |
 |---|---|---|
 | `GEMINI_API_KEY` | unset | Enables Gemini explanations; without it, rule-based text is used |
-| `GEMINI_MODEL` | `gemini-3.8-flash` | Gemini model ID |
-| `GEMINI_TIMEOUT_S` | `15` | Hard timeout for the model call |
+| `GEMINI_MODEL` | `gemini-3.6-flash` | Gemini model ID |
+| `GEMINI_TIMEOUT_S` | `25` | Hard timeout for the model call |
 | `RATE_LIMIT_PER_MINUTE` | `20` | Per-client API limit |
