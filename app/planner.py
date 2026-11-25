@@ -13,6 +13,20 @@ PLAN_CACHE_TTL_S: Final = 15 * 60
 PLAN_CACHE_MAX_ENTRIES: Final = 256
 
 
+def build_rule_plan(request: PlanRequest, air: AirQualityReport) -> PlanResponse:
+    """Build the complete household plan from the forecast and rules alone."""
+    actions = generate_actions(request, air)
+    return PlanResponse(
+        location=request.location.name,
+        air=air,
+        summary=summarise(request, air, actions),
+        routine=build_routine(request, air),
+        actions=actions,
+        community=community_impact(actions, request.community_households),
+        source="rules",
+    )
+
+
 def merge_advice(
     fallback: PlanResponse, advice: Advice, language: Language = Language.ENGLISH
 ) -> PlanResponse:
@@ -26,16 +40,20 @@ def merge_advice(
     routine = _valid_routine(advice, fallback.routine)
     if language != Language.ENGLISH and (
         not advice.summary
-        or routine is fallback.routine
+        or routine is None
         or notes.keys() != by_id.keys()
         or any(not (n.title and n.how and n.explanation) for n in notes.values())
     ):
         return fallback
     ranked_ids = list(notes) + [action_id for action_id in by_id if action_id not in notes]
     actions = tuple(_reworded(by_id[action_id], notes.get(action_id)) for action_id in ranked_ids)
+    summary = advice.summary or fallback.summary
+    routine = routine or fallback.routine
+    if (summary, routine, actions) == (fallback.summary, fallback.routine, fallback.actions):
+        return fallback
     return fallback.model_copy(
         update={
-            "summary": advice.summary or fallback.summary,
+            "summary": summary,
             "routine": routine,
             "actions": actions,
             "source": "gemini",
@@ -55,11 +73,13 @@ def _reworded(action: Action, note: AdviceNote | None) -> Action:
     )
 
 
-def _valid_routine(advice: Advice, routine: tuple[RoutineStep, ...]) -> tuple[RoutineStep, ...]:
+def _valid_routine(
+    advice: Advice, routine: tuple[RoutineStep, ...]
+) -> tuple[RoutineStep, ...] | None:
     if [s.time for s in advice.routine] != [s.time for s in routine]:
-        return routine
+        return None
     if any(not s.activity or not s.why for s in advice.routine):
-        return routine
+        return None
     return tuple(RoutineStep(time=s.time, activity=s.activity, why=s.why) for s in advice.routine)
 
 
@@ -79,23 +99,14 @@ class Planner:
 
     async def create_plan(self, request: PlanRequest, air: AirQualityReport) -> PlanResponse:
         """Return a plan, preferring Gemini's wording and falling back to rules on failure."""
-        key = _cache_key(request, air) if self._advisor else None
-        if key is not None and (cached := self._cache.get(key)) is not None:
+        if self._advisor is None:
+            return build_rule_plan(request, air)
+        key = _cache_key(request, air)
+        if (cached := self._cache.get(key)) is not None:
             return cached
-        actions = generate_actions(request, air)
-        fallback = PlanResponse(
-            location=request.location.name,
-            air=air,
-            summary=summarise(request, air, actions),
-            routine=build_routine(request, air),
-            actions=actions,
-            community=community_impact(actions, request.community_households),
-            source="rules",
-        )
-        if self._advisor is None or key is None:
-            return fallback
+        fallback = build_rule_plan(request, air)
         try:
-            advice = await self._advisor.advise(request, air, actions)
+            advice = await self._advisor.advise(request, fallback)
         except AdvisorError:
             return fallback
         plan = merge_advice(fallback, advice, request.language)

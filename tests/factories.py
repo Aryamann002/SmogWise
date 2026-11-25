@@ -6,7 +6,7 @@ from typing import Any
 from app.advisor import Advice
 from app.air_quality import parse_air_quality
 from app.errors import AdvisorError, UpstreamError
-from app.schemas import Action, AirQualityReport, Place, PlanRequest
+from app.schemas import AirQualityReport, Place, PlanRequest, PlanResponse
 
 # Real Open-Meteo hourly PM2.5 for Delhi on a November day: dirty mornings and nights,
 # cleanest mid-afternoon (15:00), smoggiest at the 08:00 rush.
@@ -94,9 +94,7 @@ class FakeAdvisor:
         self.advice = advice
         self.calls = 0
 
-    async def advise(
-        self, request: PlanRequest, air: AirQualityReport, actions: Sequence[Action]
-    ) -> Advice:
+    async def advise(self, request: PlanRequest, plan: PlanResponse) -> Advice:
         self.calls += 1
         if self.advice is None:
             raise AdvisorError

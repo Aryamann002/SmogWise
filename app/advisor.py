@@ -7,7 +7,6 @@ hallucinated or prompt-injected response cannot change any impact figure.
 import asyncio
 import json
 import logging
-from collections.abc import Sequence
 from typing import Annotated, Final, Protocol
 
 import httpx
@@ -16,9 +15,8 @@ from google.genai import errors as genai_errors
 from google.genai import types
 from pydantic import AfterValidator, BaseModel
 
-from app.actions import build_routine
 from app.errors import AdvisorError
-from app.schemas import Action, AirQualityReport, PlanRequest
+from app.schemas import PlanRequest, PlanResponse
 
 logger = logging.getLogger(__name__)
 
@@ -91,9 +89,7 @@ class Advice(BaseModel):
 class Advisor(Protocol):
     """Anything that can personalise a plan; lets tests and offline mode swap it out."""
 
-    async def advise(
-        self, request: PlanRequest, air: AirQualityReport, actions: Sequence[Action]
-    ) -> Advice:
+    async def advise(self, request: PlanRequest, plan: PlanResponse) -> Advice:
         """Return ranked, explained advice or raise AdvisorError."""
         ...
 
@@ -103,12 +99,12 @@ def _sanitise_notes(notes: str) -> str:
     return notes.replace("<", "").replace(">", "")
 
 
-def build_prompt(request: PlanRequest, air: AirQualityReport, actions: Sequence[Action]) -> str:
+def build_prompt(request: PlanRequest, plan: PlanResponse) -> str:
     """Serialise only what the model needs: no coordinates or other precise location data."""
     context = {
         "language": request.language.name.title(),
         "location": request.location.name,
-        "air_quality": air.model_dump(
+        "air_quality": plan.air.model_dump(
             mode="json",
             include={"aqi", "aqi_scale", "category", "pm2_5", "best_hour", "worst_hour"},
         ),
@@ -116,10 +112,10 @@ def build_prompt(request: PlanRequest, air: AirQualityReport, actions: Sequence[
         "commute": request.commute.model_dump(mode="json"),
         "home": request.home.model_dump(mode="json"),
         "exercises_outdoors": request.exercises_outdoors,
-        "routine": [step.model_dump() for step in build_routine(request, air)],
+        "routine": [step.model_dump() for step in plan.routine],
         "candidate_actions": [
             a.model_dump(mode="json", include={"id", "title", "how", "impact", "explanation"})
-            for a in actions
+            for a in plan.actions
         ],
     }
     return (
@@ -143,15 +139,13 @@ class GeminiAdvisor:
             thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.LOW),
         )
 
-    async def advise(
-        self, request: PlanRequest, air: AirQualityReport, actions: Sequence[Action]
-    ) -> Advice:
+    async def advise(self, request: PlanRequest, plan: PlanResponse) -> Advice:
         """Ask Gemini to rank and explain the actions; any failure becomes AdvisorError."""
         try:
             async with asyncio.timeout(self._timeout_s):
                 response = await self._client.aio.models.generate_content(
                     model=self._model,
-                    contents=build_prompt(request, air, actions),
+                    contents=build_prompt(request, plan),
                     config=self._config,
                 )
             return Advice.model_validate_json(response.text or "")

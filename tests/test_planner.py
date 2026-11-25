@@ -88,6 +88,19 @@ async def test_complete_translation_keeps_the_forecast_schedule(delhi_air) -> No
 
 
 @pytest.mark.anyio
+async def test_unusable_advice_is_not_attributed_to_gemini_or_cached(delhi_air) -> None:
+    advisor = FakeAdvisor(Advice(summary="", routine=[], actions=[]))
+    planner = Planner(advisor)
+    request = make_request()
+    fallback = await Planner(None).create_plan(request, delhi_air)
+    assert await planner.create_plan(request, delhi_air) == fallback
+
+    advisor.advice = _advice(["n95-mask"])
+    assert (await planner.create_plan(request, delhi_air)).source == "gemini"
+    assert advisor.calls == 2
+
+
+@pytest.mark.anyio
 async def test_model_plans_are_cached(delhi_air: AirQualityReport) -> None:
     advisor = FakeAdvisor(_advice(["n95-mask"]))
     planner = Planner(advisor)
