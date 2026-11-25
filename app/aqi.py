@@ -119,12 +119,15 @@ def sub_index(concentration: float, table: tuple[Breakpoint, ...]) -> int:
         if concentration <= bp.conc_high:
             clamped = max(concentration, bp.conc_low)
             slope = (bp.index_high - bp.index_low) / (bp.conc_high - bp.conc_low)
-            return round(bp.index_low + slope * (clamped - bp.conc_low))
+            return int(bp.index_low + slope * (clamped - bp.conc_low) + 0.5)
     return table[-1].index_high
 
 
 def compute_aqi(scale: AqiScale, pm25: float, pm10: float | None) -> AqiResult:
     """Return the AQI as the worst of the PM2.5 and PM10 sub-indices, as both agencies do."""
+    if scale == US_EPA:
+        pm25 = int(min(pm25, scale.pm25[-1].conc_high) * 10) / 10
+        pm10 = int(pm10) if pm10 is not None else None
     value = sub_index(pm25, scale.pm25)
     if pm10 is not None:
         value = max(value, sub_index(pm10, scale.pm10))

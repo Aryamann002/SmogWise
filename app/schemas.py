@@ -3,7 +3,7 @@
 from enum import StrEnum
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, model_validator
 
 MAX_MEMBERS_PER_GROUP = 20
 
@@ -76,7 +76,7 @@ def _round_one_decimal(value: float | None) -> float | None:
     return None if value is None else round(value, 1)
 
 
-RoundedFloat = Annotated[float | None, AfterValidator(_round_one_decimal)]
+RoundedFloat = Annotated[float | None, PlainSerializer(_round_one_decimal)]
 GroupSize = Annotated[int, Field(ge=0, le=MAX_MEMBERS_PER_GROUP)]
 
 

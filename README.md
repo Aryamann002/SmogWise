@@ -23,7 +23,10 @@ Each recommendation shows **its direct impact** (less PM2.5 breathed, CO₂ avoi
 ## Architecture
 
 ```
-Browser (static/: HTML + CSS + plain JS, no build step)
+Browser (static/: HTML + CSS + plain ES modules, no build step)
+   │  js/main.js  page wiring, place search, form      js/plan-view.js  renders a plan
+   │  js/api.js   typed API calls                       js/charts.js     hourly PM2.5 chart
+   │  js/format.js, js/dom.js  shared helpers
    │  GET /api/geocode   POST /api/plan
    ▼
 FastAPI (app/main.py) ─ security.py: CSP, security headers, per-IP rate limit
@@ -65,7 +68,7 @@ AQI uses the US EPA 2024 PM2.5 breakpoints, or the India CPCB 2014 breakpoints f
 - **Safe errors:** validation errors list field names only and never echo user input back.
 - **Secrets:** `GEMINI_API_KEY` is read only from the environment (Secret Manager on Cloud Run). Open-Meteo needs no key.
 - **HTTP headers:** a strict CSP (`default-src 'self'`, no inline scripts or styles), `frame-ancestors 'none'`, HSTS, `nosniff`, `no-referrer` and a Permissions-Policy that allows only geolocation.
-- **Rate limit:** a sliding-window limit of 20 requests per minute per client on `/api/*`.
+- **Rate limit:** a sliding-window limit of 20 requests per minute per client per instance on `/api/*`. Behind a reverse proxy, set `FORWARDED_ALLOW_IPS` to trusted proxy addresses and configure the proxy to sanitize forwarded headers. Otherwise users behind the proxy can share its limit.
 - **Prompt injection:** user notes are wrapped in delimiters as data only, angle brackets are stripped and the model output is schema-validated. Coordinates are never sent to the LLM.
 - **Rendering:** the frontend writes all text with `textContent` and never uses `innerHTML`.
 - **Upstream data:** responses from Open-Meteo are validated before use, with timeouts on every outbound call.
@@ -76,7 +79,7 @@ AQI uses the US EPA 2024 PM2.5 breakpoints, or the India CPCB 2014 breakpoints f
 - **One shared HTTP client:** a single `httpx.AsyncClient` serves all outbound requests.
 - **Caching:** TTL plus LRU caches hold air quality (30 minutes, coordinates rounded to about 1 km), geocoding (24 hours) and Gemini plans (15 minutes).
 - **Gemini cost:** one Gemini call per plan, at low thinking level, with a hard 25-second timeout.
-- **Small, compressed frontend:** GZip responses, three static files and one self-hosted 77 KB headline font, with no framework, no images and no build step.
+- **Small, compressed frontend:** GZip responses, one HTML page, one stylesheet, six small ES modules fetched in parallel through `modulepreload`, and one self-hosted 77 KB headline font. No framework, no images and no build step.
 - **Cheap animation:** CSS only, animating `transform`, `opacity` and `clip-path`. Section reveals use scroll-driven CSS animations, so no JavaScript runs on scroll.
 
 ## Accessibility
@@ -106,6 +109,7 @@ uvicorn app.main:app --reload   # http://localhost:8000
 ruff check . && ruff format --check .
 mypy app                        # strict mode, configured in pyproject.toml
 pytest --cov                    # fails under 90% coverage
+npx --package typescript@6.0.3 tsc -p jsconfig.json   # strict type check of static/js via JSDoc
 pytest tests/test_impact.py::test_commute_switch_saving   # a single test
 ```
 

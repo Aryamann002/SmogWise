@@ -24,6 +24,8 @@ from app.schemas import ErrorResponse, Place, PlanRequest, PlanResponse
 from app.security import SlidingWindowRateLimiter, error_response, install_security
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+# HTTPX logs complete upstream URLs, including location queries, at INFO.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 # Slim Linux images have no system MIME table entry for WOFF2, so StaticFiles would send
 # the self-hosted font as application/octet-stream.
 mimetypes.add_type("font/woff2", ".woff2")
@@ -99,7 +101,13 @@ async def _handle_domain_error(_: Request, exc: Exception) -> JSONResponse:
 async def _handle_validation_error(_: Request, exc: Exception) -> JSONResponse:
     # Field names only: user input is never echoed back in error responses.
     errors = exc.errors() if isinstance(exc, RequestValidationError) else []
-    fields = sorted({".".join(str(part) for part in err["loc"][1:]) for err in errors})
+    fields = sorted(
+        {
+            ".".join(str(part) for part in err["loc"][1:])
+            for err in errors
+            if err["type"] != "extra_forbidden" and len(err["loc"]) > 1
+        }
+    )
     message = "Please check these fields: " + ", ".join(fields) if fields else "Invalid request."
     return error_response(HTTP_UNPROCESSABLE, "invalid_request", message)
 

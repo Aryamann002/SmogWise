@@ -6,8 +6,9 @@ from app.actions import (
     generate_actions,
     summarise,
 )
+from app.air_quality import parse_air_quality
 from app.schemas import Action, AirQualityReport, PlanRequest
-from tests.factories import CLEAN_HOURLY_PM25, make_air, make_request
+from tests.factories import CLEAN_HOURLY_PM25, air_payload, make_air, make_request
 
 WFH_ELECTRIC = {
     "commute": {"mode": "work_from_home"},
@@ -52,7 +53,8 @@ def test_every_action_is_explained_and_quantified(delhi_air: AirQualityReport) -
 def test_long_car_commute_switches_to_rail(delhi_air: AirQualityReport) -> None:
     action = _by_id(generate_actions(make_request(), delhi_air), "commute-switch")
     assert action.title.startswith("Take the metro")
-    assert action.impact.co2_kg_per_day == pytest.approx(round(2 * 12 * (0.166 - 0.028), 1))
+    assert action.impact.co2_kg_per_day == pytest.approx(2 * 12 * (0.166 - 0.028))
+    assert action.impact.model_dump()["co2_kg_per_day"] == 3.3
 
 
 def test_short_commute_on_a_moderate_day_suggests_cycling() -> None:
@@ -121,6 +123,30 @@ def test_routine_skips_commute_for_home_workers(delhi_air: AirQualityReport) -> 
     assert "08:30" not in [step.time for step in routine]
 
 
+def test_polluted_best_hour_does_not_trigger_airing_or_outdoor_activity(delhi_air) -> None:
+    request = make_request(commute={"mode": "car", "distance_km": 2})
+    actions = generate_actions(request, delhi_air)
+    assert "ventilation-timing" not in _ids(actions)
+    assert "exercise-indoors" in _ids(actions)
+    assert "metro" in _by_id(actions, "commute-switch").title
+    best = next(step for step in build_routine(request, delhi_air) if step.time == "15:00")
+    assert "clean room" in best.activity
+
+
+def test_flat_clean_forecast_does_not_schedule_peak_smog_precautions() -> None:
+    air = make_air(hourly=CLEAN_HOURLY_PM25, current_pm25=5.0)
+    assert all("peak smog" not in step.activity for step in build_routine(make_request(), air))
+
+
+def test_evening_plan_orders_tomorrows_steps_after_bedtime() -> None:
+    payload = air_payload(current_time="2026-11-25T18:30")
+    payload["hourly"]["time"] = [f"2026-11-26T{h:02d}:00" for h in range(24)]
+    air = parse_air_quality(payload, "IN")
+    times = [s.time for s in build_routine(make_request(), air)]
+    assert times[0] == "21:00"
+    assert times[1:] == sorted(times[1:])
+
+
 def test_community_impact_scales_emission_savings(delhi_air: AirQualityReport) -> None:
     actions = generate_actions(make_request(), delhi_air)
     single = community_impact(actions, 1)
@@ -128,6 +154,7 @@ def test_community_impact_scales_emission_savings(delhi_air: AirQualityReport) -
     assert single.co2_kg_per_day is not None
     assert street.co2_kg_per_day == pytest.approx(single.co2_kg_per_day * 50, abs=0.1)
     assert street.households == 50
+    assert street.model_dump()["co2_kg_per_day"] == 165.6
 
 
 def test_summary_names_place_and_category(delhi_air: AirQualityReport) -> None:

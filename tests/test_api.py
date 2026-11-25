@@ -65,7 +65,7 @@ def test_plan_returns_quantified_rule_based_plan(client: TestClient) -> None:
         ({"location": {**PLAN_BODY["location"], "latitude": 999}}, "location.latitude"),
         ({"commute": {"mode": "rocket", "distance_km": 1}}, "commute.mode"),
         ({"notes": "x" * 301}, "notes"),
-        ({"is_admin": True}, "is_admin"),
+        ({"is_admin": True}, "Invalid request."),
         ({"household": {"adults": 0, "children": 0, "elderly": 0}}, "household"),
     ],
 )
@@ -79,6 +79,7 @@ def test_invalid_plans_are_rejected_without_echoing_input(
     assert field in error["message"]
     assert "999" not in response.text
     assert "rocket" not in response.text
+    assert "is_admin" not in response.text
 
 
 def test_upstream_failure_returns_friendly_502(

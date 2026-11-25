@@ -11,7 +11,7 @@ from datetime import datetime
 from enum import IntEnum
 from typing import Final
 
-from app.aqi import INDIA_COUNTRY_CODE, Severity
+from app.aqi import INDIA_COUNTRY_CODE, US_EPA, Severity
 from app.impact import (
     ASSUMED_BURNING_KG_PER_DAY,
     CEILING_HEIGHT_M,
@@ -85,6 +85,11 @@ def clock_time(iso_time: str) -> str:
     return datetime.fromisoformat(iso_time).strftime("%H:%M")
 
 
+def _forecast_time(iso_time: str, air: AirQualityReport) -> str:
+    suffix = " tomorrow" if iso_time[:10] != air.observed_at[:10] else ""
+    return clock_time(iso_time) + suffix
+
+
 def _morning_pm25(air: AirQualityReport) -> float:
     values = [p.pm2_5 for p in air.forecast if datetime.fromisoformat(p.time).hour in MORNING_HOURS]
     return statistics.fmean(values) if values else air.pm2_5
@@ -100,6 +105,16 @@ def _boost(request: PlanRequest) -> int:
 
 def _clean_air_device(request: PlanRequest) -> str:
     return "purifier" if request.home.has_purifier else "DIY air filter"
+
+
+def _cleaner_window(air: AirQualityReport) -> bool:
+    # Conservative screen for optional activities: only PM2.5 is forecast hourly.
+    return air.best_hour.pm2_5 <= US_EPA.pm25[Severity.MODERATE].conc_high
+
+
+def _outdoor_activity_ok(request: PlanRequest, air: AirQualityReport) -> bool:
+    limit = Severity.SENSITIVE if request.household.has_sensitive_members else Severity.UNHEALTHY
+    return air.level < limit
 
 
 # --- Rules: each returns one ranked action, or None when it does not apply. ----------------
@@ -199,7 +214,7 @@ def exercise_rule(request: PlanRequest, air: AirQualityReport) -> RankedAction |
     """Move workouts to the cleanest hour, or indoors when the air is very unhealthy."""
     if not request.exercises_outdoors:
         return None
-    if air.level >= Severity.VERY_UNHEALTHY:
+    if not _outdoor_activity_ok(request, air) or not _cleaner_window(air):
         return _indoor_exercise(request, air)
     morning, best = _morning_pm25(air), air.best_hour
     reduction = exposure_reduction_pct(morning, best.pm2_5)
@@ -208,7 +223,7 @@ def exercise_rule(request: PlanRequest, air: AirQualityReport) -> RankedAction |
     action = Action(
         id="exercise-timing",
         category=ActionCategory.HEALTH,
-        title=f"Move outdoor exercise to {clock_time(best.time)}",
+        title=f"Move outdoor exercise to {_forecast_time(best.time, air)}",
         how=(
             "Skip early-morning walks and runs. In winter, cold air traps smog near the ground "
             "until the sun warms it."
@@ -254,7 +269,7 @@ def commute_rule(request: PlanRequest, air: AirQualityReport) -> RankedAction | 
     mode, distance = request.commute.mode, request.commute.distance_km
     if mode not in PRIVATE_MOTOR_MODES or distance == 0:
         return None
-    active = distance <= SHORT_TRIP_KM and air.level < Severity.VERY_UNHEALTHY
+    active = distance <= SHORT_TRIP_KM and _outdoor_activity_ok(request, air)
     alternative = CommuteMode.BICYCLE if active else CommuteMode.METRO
     current = commute_co2_kg_per_day(distance, mode)
     saved = commute_co2_saved_kg_per_day(distance, mode, alternative)
@@ -264,7 +279,7 @@ def commute_rule(request: PlanRequest, air: AirQualityReport) -> RankedAction | 
         title=(
             f"Walk or cycle your {distance:g} km trip"
             if active
-            else "Take the metro, train or a shared bus"
+            else "Take the metro for your commute"
         ),
         how=(
             "Choose quieter side streets, away from traffic exhaust."
@@ -324,14 +339,14 @@ def ventilation_rule(request: PlanRequest, air: AirQualityReport) -> RankedActio
     """Time window-opening to the cleanest hour instead of airing out in peak smog."""
     best, worst = air.best_hour, air.worst_hour
     reduction = exposure_reduction_pct(worst.pm2_5, best.pm2_5)
-    if reduction < MIN_USEFUL_REDUCTION_PCT:
+    if not _cleaner_window(air) or reduction < MIN_USEFUL_REDUCTION_PCT:
         return None
     action = Action(
         id="ventilation-timing",
         category=ActionCategory.INDOOR,
-        title=f"Air out at {clock_time(best.time)}, shut windows by {clock_time(worst.time)}",
+        title=f"Check outdoor air before airing out at {_forecast_time(best.time, air)}",
         how=(
-            f"Open windows wide for {AIRING_MINUTES} minutes at the cleanest hour to clear "
+            f"If local air has cleared, open windows for {AIRING_MINUTES} minutes to clear "
             "cooking fumes and stale air, then keep them shut through the smoggiest hours."
         ),
         impact=Impact(exposure_reduction_pct=reduction),
@@ -426,7 +441,11 @@ def generate_actions(request: PlanRequest, air: AirQualityReport) -> tuple[Actio
 def build_routine(request: PlanRequest, air: AirQualityReport) -> tuple[RoutineStep, ...]:
     """Lay out the day around the forecast's cleanest and smoggiest hours."""
     best, worst, device = air.best_hour, air.worst_hour, _clean_air_device(request)
-    outdoor_ok = request.exercises_outdoors and air.level < Severity.VERY_UNHEALTHY
+    best_activity = "Keep outdoor air out and use your clean room while smog persists."
+    if _cleaner_window(air):
+        best_activity = f"If local air has cleared, air out for {AIRING_MINUTES} minutes."
+        if request.exercises_outdoors and _outdoor_activity_ok(request, air):
+            best_activity += " Consider this hour for outdoor exercise."
     steps = [
         RoutineStep(
             time=MORNING_TIME,
@@ -435,14 +454,8 @@ def build_routine(request: PlanRequest, air: AirQualityReport) -> tuple[RoutineS
         ),
         RoutineStep(
             time=clock_time(best.time),
-            activity=f"Open windows for {AIRING_MINUTES} minutes"
-            + ("; this is the hour for outdoor exercise." if outdoor_ok else "."),
+            activity=best_activity,
             why=f"Cleanest hour of the day ({best.pm2_5:.0f} µg/m³).",
-        ),
-        RoutineStep(
-            time=clock_time(worst.time),
-            activity="Keep windows shut and keep children and elders indoors.",
-            why=f"Smoggiest hour of the day ({worst.pm2_5:.0f} µg/m³).",
         ),
         RoutineStep(
             time=BEDTIME,
@@ -450,15 +463,25 @@ def build_routine(request: PlanRequest, air: AirQualityReport) -> tuple[RoutineS
             why="You spend about a third of the day asleep, so bedroom air matters most.",
         ),
     ]
+    if worst.pm2_5 > US_EPA.pm25[Severity.MODERATE].conc_high and worst.time != best.time:
+        steps.append(
+            RoutineStep(
+                time=clock_time(worst.time),
+                activity="Limit outdoor exertion during peak smog.",
+                why=f"Highest forecast PM2.5 ({worst.pm2_5:.0f} µg/m³).",
+            )
+        )
     if request.commute.mode is not CommuteMode.WORK_FROM_HOME:
         steps.append(
             RoutineStep(
                 time=COMMUTE_TIME,
-                activity="Wear an N95 for the commute and avoid the busiest roads.",
+                activity="Avoid the busiest roads."
+                + (" Wear a well-fitted N95 outdoors." if air.level >= Severity.SENSITIVE else ""),
                 why="Rush-hour traffic corridors carry the day's highest street-level PM2.5.",
             )
         )
-    return tuple(sorted(steps, key=lambda step: step.time))
+    start_hour = clock_time(air.observed_at)[:2]
+    return tuple(sorted(steps, key=lambda step: (step.time[:2] < start_hour, step.time)))
 
 
 def community_impact(actions: Sequence[Action], households: int) -> CommunityImpact:

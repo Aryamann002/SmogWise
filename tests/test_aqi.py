@@ -28,6 +28,11 @@ def test_india_scale_reports_cpcb_category_for_delhi_winter_smog() -> None:
     assert result.scale == "India CPCB"
 
 
+def test_us_precision_is_applied_before_breakpoint_lookup() -> None:
+    assert compute_aqi(US_EPA, pm25=9.09, pm10=54.9).value == 50
+    assert compute_aqi(US_EPA, pm25=9.1, pm10=None).value == 51
+
+
 def test_worst_pollutant_sets_the_index() -> None:
     pm25_only = compute_aqi(US_EPA, pm25=5.0, pm10=None)
     with_dusty_pm10 = compute_aqi(US_EPA, pm25=5.0, pm10=300.0)

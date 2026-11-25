@@ -65,6 +65,29 @@ async def test_advisor_failure_falls_back_to_rules(delhi_air: AirQualityReport) 
 
 
 @pytest.mark.anyio
+async def test_partial_translation_is_not_presented_as_a_translated_plan(delhi_air) -> None:
+    plan = await Planner(FakeAdvisor(_advice([]))).create_plan(
+        make_request(language="hi"), delhi_air
+    )
+    assert plan.source == "rules"
+
+
+@pytest.mark.anyio
+async def test_complete_translation_keeps_the_forecast_schedule(delhi_air) -> None:
+    request = make_request(language="hi")
+    advice = _advice([a.id for a in generate_actions(request, delhi_air)])
+    for note in advice.actions:
+        note.how = "निर्देश"
+    advice.routine = [
+        AdviceStep(time=s.time, activity="गतिविधि", why="कारण")
+        for s in build_routine(request, delhi_air)
+    ]
+    plan = await Planner(FakeAdvisor(advice)).create_plan(request, delhi_air)
+    assert plan.source == "gemini"
+    assert plan.routine[0].activity == "गतिविधि"
+
+
+@pytest.mark.anyio
 async def test_model_plans_are_cached(delhi_air: AirQualityReport) -> None:
     advisor = FakeAdvisor(_advice(["n95-mask"]))
     planner = Planner(advisor)

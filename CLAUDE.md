@@ -18,6 +18,7 @@ ruff check . && ruff format --check .        # lint and format (strict rule set 
 mypy app                                     # strict mode
 pytest --cov                                 # coverage must stay >= 90%
 pytest tests/test_actions.py::test_long_car_commute_switches_to_rail   # single test
+npx --package typescript@6.0.3 tsc -p jsconfig.json   # strict JSDoc type check of static/js
 ```
 
 ## Architecture
@@ -45,7 +46,9 @@ pytest tests/test_actions.py::test_long_car_commute_switches_to_rail   # single 
 ## Conventions
 
 - **Frontend:**
-  - The CSP forbids inline scripts and styles, so put no inline handlers or `style=` attributes in HTML.
+  - ES modules in `static/js/`, one concern each: `main.js` wires the page, `plan-view.js` renders a plan, `api.js` holds the typed API calls and response typedefs, `charts.js` the PM2.5 chart. Add every new module to the `modulepreload` links in `index.html`.
+  - Types are JSDoc checked by `tsc` in strict mode through `jsconfig.json`; keep it passing.
+  - The CSP forbids inline scripts and styles, so put no inline handlers or `style=` attributes in HTML. Set dynamic values through CSSOM, such as `element.style.setProperty`.
   - Render API text with `textContent` and `<template>` clones only.
   - Keep pages free of axe-core violations.
 - **Python:**

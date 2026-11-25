@@ -5,16 +5,16 @@ are treated as untrusted and validated before use.
 """
 
 import logging
-from datetime import datetime
-from typing import Final, Self
+from datetime import datetime, timedelta
+from typing import Annotated, Final, Self
 
 import httpx
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import AfterValidator, BaseModel, Field, ValidationError, model_validator
 
 from app.aqi import compute_aqi, scale_for_country
 from app.cache import TTLCache
 from app.errors import UpstreamError
-from app.schemas import AirQualityReport, HourlyPm, Place
+from app.schemas import AirQualityReport, HourlyPm, Location, Place
 
 logger = logging.getLogger(__name__)
 
@@ -31,12 +31,8 @@ PLACES_CACHE_TTL_S: Final = 24 * 60 * 60
 CACHE_MAX_ENTRIES: Final = 512
 
 
-class _GeoResult(BaseModel):
-    name: str
-    latitude: float
-    longitude: float
+class _GeoResult(Location, extra="ignore"):
     country: str | None = None
-    country_code: str | None = None
     admin1: str | None = None
 
 
@@ -44,17 +40,26 @@ class _GeoPayload(BaseModel):
     results: list[_GeoResult] = []
 
 
+def _local_timestamp(value: str) -> str:
+    """Validate the local minute timestamps requested from Open-Meteo."""
+    return datetime.strptime(value, "%Y-%m-%dT%H:%M").isoformat(timespec="minutes")
+
+
+LocalTime = Annotated[str, AfterValidator(_local_timestamp)]
+Concentration = Annotated[float, Field(ge=0, allow_inf_nan=False)]
+
+
 class _Current(BaseModel):
-    time: str
-    pm2_5: float | None = Field(default=None, ge=0)
-    pm10: float | None = Field(default=None, ge=0)
-    nitrogen_dioxide: float | None = Field(default=None, ge=0)
-    ozone: float | None = Field(default=None, ge=0)
+    time: LocalTime
+    pm2_5: Concentration | None = None
+    pm10: Concentration | None = None
+    nitrogen_dioxide: Concentration | None = None
+    ozone: Concentration | None = None
 
 
 class _Hourly(BaseModel):
-    time: list[str]
-    pm2_5: list[float | None]
+    time: list[LocalTime]
+    pm2_5: list[Concentration | None]
 
     @model_validator(mode="after")
     def _same_length(self) -> Self:
@@ -100,12 +105,13 @@ def parse_places(payload: object) -> tuple[Place, ...]:
 def _upcoming_hours(hourly: _Hourly, current_time: str) -> tuple[HourlyPm, ...]:
     """Return the next day of hourly PM2.5 values, starting with the current hour."""
     current_hour = current_time[:13] + ":00"  # ISO strings in one zone sort chronologically
-    points = (
+    start = datetime.fromisoformat(current_hour)
+    duration = timedelta(hours=FORECAST_HOURS)
+    return tuple(
         HourlyPm(time=t, pm2_5=value)
         for t, value in zip(hourly.time, hourly.pm2_5, strict=True)
-        if value is not None and t >= current_hour
+        if value is not None and t >= current_hour and datetime.fromisoformat(t) - start < duration
     )
-    return tuple(points)[:FORECAST_HOURS]
 
 
 def parse_air_quality(payload: object, country_code: str | None) -> AirQualityReport:

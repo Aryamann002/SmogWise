@@ -41,6 +41,16 @@ def test_forecast_starts_at_the_current_hour() -> None:
     assert report.aqi_scale == "US EPA"
 
 
+def test_missing_hours_do_not_extend_forecast_into_the_following_day() -> None:
+    payload = air_payload()
+    payload["hourly"]["time"].append("2026-11-26T00:00")
+    payload["hourly"]["pm2_5"][1] = None
+    payload["hourly"]["pm2_5"].append(999)
+    report = parse_air_quality(payload, "IN")
+    assert len(report.forecast) == 23
+    assert report.worst_hour.pm2_5 < 999
+
+
 def test_missing_hours_are_skipped() -> None:
     hourly: list[float | None] = list(DELHI_HOURLY_PM25)
     hourly[15] = None
@@ -52,6 +62,10 @@ def test_missing_hours_are_skipped() -> None:
     "payload",
     [
         air_payload(current_pm25=None),
+        air_payload(current_time="yesterday"),
+        air_payload(current_pm25=float("inf")),
+        air_payload(hourly=[-1]),
+        air_payload(hourly=[float("nan")]),
         air_payload(hourly=[None] * 24),
         {"current": {"time": "2026-11-25T00:00"}},
         {"current": {"time": "x", "pm2_5": -5}, "hourly": {"time": [], "pm2_5": []}},
@@ -73,6 +87,11 @@ def test_parse_places_keeps_only_needed_fields() -> None:
 
 def test_parse_places_handles_no_results() -> None:
     assert parse_places({}) == ()
+
+
+def test_upstream_place_must_be_usable_in_a_plan() -> None:
+    with pytest.raises(UpstreamError):
+        parse_places({"results": [{**GEO_PAYLOAD["results"][0], "longitude": 200}]})
 
 
 def _client(handler: Callable[[httpx.Request], httpx.Response]) -> OpenMeteoClient:

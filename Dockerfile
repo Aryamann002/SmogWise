@@ -18,4 +18,4 @@ USER appuser
 EXPOSE 8080
 
 # Cloud Run sets $PORT and terminates TLS in front of the container.
-CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips='*'"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port \"$PORT\" --proxy-headers"]

@@ -16,6 +16,7 @@ from google.genai import errors as genai_errors
 from google.genai import types
 from pydantic import AfterValidator, BaseModel
 
+from app.actions import build_routine
 from app.errors import AdvisorError
 from app.schemas import Action, AirQualityReport, PlanRequest
 
@@ -38,8 +39,8 @@ Your job:
 2. For each action give a short title (under 10 words), a 1-2 sentence "how" with practical
    steps, and a 1-3 sentence explanation in plain language (reading age about 12) that says
    why it matters for this family and restates its impact.
-3. Write a daily routine of 4-7 steps with 24-hour "HH:MM" times, built around the forecast's
-   cleanest and smoggiest hours.
+3. Translate the supplied routine in order. Keep every time, activity, condition and warning.
+   Do not add activities or recommend opening windows when the routine advises against it.
 4. Write a two-sentence summary.
 
 Rules:
@@ -115,6 +116,7 @@ def build_prompt(request: PlanRequest, air: AirQualityReport, actions: Sequence[
         "commute": request.commute.model_dump(mode="json"),
         "home": request.home.model_dump(mode="json"),
         "exercises_outdoors": request.exercises_outdoors,
+        "routine": [step.model_dump() for step in build_routine(request, air)],
         "candidate_actions": [
             a.model_dump(mode="json", include={"id", "title", "how", "impact", "explanation"})
             for a in actions
