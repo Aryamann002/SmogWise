@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+In a shared checkout with a local `AGENT_HANDOFF.md`, read the current claims and record your files before editing.
+
 ## Project
 
 SmogWise is a competition entry for the brief in `challange.txt`: a GenAI assistant for families facing winter smog. It is judged on the rubric in `Parameters.txt`: code quality (where most points are lost), security, efficiency, testing, accessibility and alignment with the problem statement. Keep every change consistent with that rubric.
