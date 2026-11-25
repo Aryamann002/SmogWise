@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SmogWise builds a family plan for winter smog: a low-exposure daily routine, indoor air fixes and cleaner choices, each with its measured impact.">
+  <meta name="color-scheme" content="light dark">
+  <title>SmogWise, a winter smog coach for families</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%230b6e4f'/%3E%3Cpath d='M7 19c3-4 6-4 9 0s6 4 9 0' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <p class="brand">
+        <svg class="brand__logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <circle cx="16" cy="16" r="15"></circle>
+          <path d="M7 19c3-4 6-4 9 0s6 4 9 0"></path>
+        </svg>
+        SmogWise
+      </p>
+      <p class="site-header__tagline">Breathe cleaner through winter smog, and help your street do the same.</p>
+    </div>
+  </header>
+
+  <main id="main" class="container" tabindex="-1">
+    <noscript><p class="notice">SmogWise needs JavaScript to fetch live air quality for your area.</p></noscript>
+
+    <section class="panel" aria-labelledby="form-title">
+      <h1 id="form-title">Your family's smog plan</h1>
+      <p class="lead">Tell us where and how you live. We combine the live air-quality forecast with your routine, suggest changes, and show how much each one helps.</p>
+
+      <form id="plan-form" class="plan-form" novalidate>
+        <fieldset class="group">
+          <legend class="group__legend">1. Where do you live?</legend>
+          <div class="search-row">
+            <div class="field search-row__input">
+              <label for="place-query">City or town</label>
+              <input id="place-query" type="search" autocomplete="address-level2" minlength="2" maxlength="80" aria-describedby="place-help" enterkeyhint="search">
+            </div>
+            <button type="button" id="search-button" class="button button--secondary">Search</button>
+            <button type="button" id="locate-button" class="button button--ghost">Use my location</button>
+          </div>
+          <p id="place-help" class="help">Search for your city, then choose it from the list.</p>
+          <div class="field">
+            <label for="place-select">Your place</label>
+            <select id="place-select" required disabled>
+              <option value="">Search for your city first</option>
+            </select>
+          </div>
+          <p id="place-status" class="help" role="status"></p>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend class="group__legend">2. Who lives at home?</legend>
+          <div class="grid">
+            <div class="field">
+              <label for="adults">Adults</label>
+              <input id="adults" name="adults" type="number" inputmode="numeric" min="0" max="20" value="2" required>
+            </div>
+            <div class="field">
+              <label for="children">Children</label>
+              <input id="children" name="children" type="number" inputmode="numeric" min="0" max="20" value="0" required>
+            </div>
+            <div class="field">
+              <label for="elderly">People over 65</label>
+              <input id="elderly" name="elderly" type="number" inputmode="numeric" min="0" max="20" value="0" required>
+            </div>
+          </div>
+          <fieldset class="checks">
+            <legend>Anyone at home with:</legend>
+            <label class="check"><input type="checkbox" name="conditions" value="asthma"> Asthma</label>
+            <label class="check"><input type="checkbox" name="conditions" value="copd"> COPD or chronic bronchitis</label>
+            <label class="check"><input type="checkbox" name="conditions" value="heart_disease"> Heart disease</label>
+            <label class="check"><input type="checkbox" name="conditions" value="pregnancy"> Pregnancy</label>
+            <label class="check"><input type="checkbox" name="conditions" value="allergies"> Allergies</label>
+          </fieldset>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend class="group__legend">3. Your daily routine</legend>
+          <div class="grid">
+            <div class="field">
+              <label for="commute-mode">Main way to work or school</label>
+              <select id="commute-mode" name="commute-mode">
+                <option value="car">Car</option>
+                <option value="two_wheeler">Motorbike or scooter</option>
+                <option value="auto_rickshaw">Auto-rickshaw</option>
+                <option value="bus">Bus</option>
+                <option value="metro">Metro or train</option>
+                <option value="bicycle">Bicycle</option>
+                <option value="walk">Walking</option>
+                <option value="work_from_home">Work or study from home</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="distance">One-way distance (km)</label>
+              <input id="distance" name="distance" type="number" inputmode="decimal" min="0" max="200" step="0.5" value="10">
+            </div>
+          </div>
+          <label class="check"><input type="checkbox" id="exercises-outdoors" name="exercises-outdoors" checked> Someone walks, runs or exercises outdoors most days</label>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend class="group__legend">4. Your home</legend>
+          <div class="grid">
+            <div class="field">
+              <label for="heating">Winter heating</label>
+              <select id="heating" name="heating">
+                <option value="none">No heating</option>
+                <option value="electric">Electric heater</option>
+                <option value="gas">Gas heater</option>
+                <option value="kerosene">Kerosene heater</option>
+                <option value="wood">Wood fire or stove</option>
+                <option value="coal">Coal or charcoal brazier</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="cooking">Cooking fuel</label>
+              <select id="cooking" name="cooking">
+                <option value="gas">LPG or piped gas</option>
+                <option value="electric">Electric or induction</option>
+                <option value="kerosene">Kerosene</option>
+                <option value="wood">Wood, dung or crop waste</option>
+                <option value="coal">Coal</option>
+                <option value="none">We don't cook at home</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="room-area">Main room size (m²)</label>
+              <input id="room-area" name="room-area" type="number" inputmode="decimal" min="4" max="200" step="1" value="15" aria-describedby="room-help">
+              <p id="room-help" class="help">A 3 × 5 m bedroom is 15 m².</p>
+            </div>
+          </div>
+          <label class="check"><input type="checkbox" id="has-purifier" name="has-purifier"> We own an air purifier</label>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend class="group__legend">5. Preferences</legend>
+          <div class="grid">
+            <div class="field">
+              <label for="language">Language for advice</label>
+              <select id="language" name="language">
+                <option value="en">English</option>
+                <option value="hi" lang="hi">हिन्दी (Hindi)</option>
+                <option value="bn" lang="bn">বাংলা (Bengali)</option>
+                <option value="mr" lang="mr">मराठी (Marathi)</option>
+                <option value="ta" lang="ta">தமிழ் (Tamil)</option>
+                <option value="te" lang="te">తెలుగు (Telugu)</option>
+                <option value="es" lang="es">Español (Spanish)</option>
+                <option value="zh" lang="zh">中文 (Chinese)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="community">Homes on your street or in your building</label>
+              <input id="community" name="community" type="number" inputmode="numeric" min="1" max="10000" value="50">
+            </div>
+          </div>
+          <div class="field">
+            <label for="notes">Anything else? <span class="optional">(optional)</span></label>
+            <textarea id="notes" name="notes" rows="3" maxlength="300" aria-describedby="notes-count"></textarea>
+            <p id="notes-count" class="help">0 of 300 characters</p>
+          </div>
+        </fieldset>
+
+        <p id="form-error" class="alert" role="alert" hidden></p>
+        <button type="submit" id="submit-button" class="button button--primary">Get my plan</button>
+        <p id="plan-status" class="help" role="status"></p>
+      </form>
+    </section>
+
+    <section id="results" class="results" aria-labelledby="results-title" hidden>
+      <h2 id="results-title" tabindex="-1">Your plan</h2>
+
+      <div class="air-card">
+        <p id="aqi-badge" class="aqi-badge">
+          <span id="aqi-value" class="aqi-badge__value"></span>
+          <span id="aqi-label" class="aqi-badge__label"></span>
+        </p>
+        <dl class="stats">
+          <div><dt>PM2.5 now</dt><dd id="pm-now"></dd></div>
+          <div><dt>Cleanest hour</dt><dd id="best-hour"></dd></div>
+          <div><dt>Smoggiest hour</dt><dd id="worst-hour"></dd></div>
+        </dl>
+        <figure class="forecast">
+          <svg id="forecast-chart" class="forecast__chart" viewBox="0 0 600 120" preserveAspectRatio="none" aria-hidden="true" focusable="false"></svg>
+          <figcaption id="forecast-caption" class="help"></figcaption>
+        </figure>
+      </div>
+
+      <p id="summary" class="summary"></p>
+
+      <h3>Your day</h3>
+      <ol id="routine" class="routine"></ol>
+
+      <h3>What to change, and what it does</h3>
+      <ul id="actions" class="actions"></ul>
+
+      <section class="community" aria-labelledby="community-title">
+        <h3 id="community-title">If your neighbours join in</h3>
+        <p id="community-text"></p>
+      </section>
+
+      <p id="source-note" class="help"></p>
+      <button type="button" id="print-button" class="button button--secondary">Print or save this plan</button>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>Air data: <a href="https://open-meteo.com/en/docs/air-quality-api">Open-Meteo</a> (Copernicus CAMS forecasts). Explanations: Google Gemini. Impact figures are estimates from published emission factors. This is general guidance, not medical advice.</p>
+    </div>
+  </footer>
+
+  <template id="routine-template">
+    <li class="routine__step">
+      <span class="routine__time"></span>
+      <div>
+        <p class="routine__activity"></p>
+        <p class="routine__why"></p>
+      </div>
+    </li>
+  </template>
+
+  <template id="action-template">
+    <li class="action">
+      <article class="action__card">
+        <p class="action__category"></p>
+        <h4 class="action__title"></h4>
+        <dl class="action__impact"></dl>
+        <p class="action__explanation"></p>
+        <p class="action__how"><strong>How:</strong> <span class="action__how-text"></span></p>
+        <details class="action__method" lang="en">
+          <summary>How we calculated this</summary>
+          <p class="action__method-text"></p>
+        </details>
+      </article>
+    </li>
+  </template>
+</body>
+</html>

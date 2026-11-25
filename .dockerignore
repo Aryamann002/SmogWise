@@ -1,0 +1,15 @@
+.venv/
+.git/
+.github/
+tests/
+**/__pycache__/
+.env
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.md
+!README.md
+challange.txt
+Parameters.txt

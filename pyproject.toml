@@ -1,0 +1,44 @@
+[project]
+name = "smogwise"
+version = "1.0.0"
+description = "AI assistant that helps families cut winter smog exposure and emissions."
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "B", "UP", "SIM", "N", "S", "RUF", "D", "C90", "PL", "ANN",
+    "ASYNC", "PT", "RET", "ARG", "PTH", "ERA", "T20",
+]
+ignore = ["D107"]  # __init__ is documented by its class docstring
+allowed-confusables = ["µ", "×", "–", "−", "’"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 8
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "D", "ANN", "ARG", "PLR2004", "PLR0913"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers -q"
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
