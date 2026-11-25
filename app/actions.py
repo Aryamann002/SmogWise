@@ -220,10 +220,11 @@ def exercise_rule(request: PlanRequest, air: AirQualityReport) -> RankedAction |
     reduction = exposure_reduction_pct(morning, best.pm2_5)
     if reduction < MIN_USEFUL_REDUCTION_PCT:
         return None
+    best_time = _forecast_time(best.time, air)
     action = Action(
         id="exercise-timing",
         category=ActionCategory.HEALTH,
-        title=f"Move outdoor exercise to {_forecast_time(best.time, air)}",
+        title=f"Move outdoor exercise to {best_time}",
         how=(
             "Skip early-morning walks and runs. In winter, cold air traps smog near the ground "
             "until the sun warms it."
@@ -231,7 +232,7 @@ def exercise_rule(request: PlanRequest, air: AirQualityReport) -> RankedAction |
         impact=Impact(exposure_reduction_pct=reduction),
         explanation=(
             f"PM2.5 averages {morning:.0f} µg/m³ between 6 and 10 am but falls to "
-            f"{best.pm2_5:.0f} µg/m³ at {clock_time(best.time)}, so the same workout puts "
+            f"{best.pm2_5:.0f} µg/m³ at {best_time}, so the same workout puts "
             f"{reduction:.0f}% less smog in your lungs."
         ),
         method=(
@@ -341,18 +342,20 @@ def ventilation_rule(request: PlanRequest, air: AirQualityReport) -> RankedActio
     reduction = exposure_reduction_pct(worst.pm2_5, best.pm2_5)
     if not _cleaner_window(air) or reduction < MIN_USEFUL_REDUCTION_PCT:
         return None
+    best_time = _forecast_time(best.time, air)
+    worst_time = _forecast_time(worst.time, air)
     action = Action(
         id="ventilation-timing",
         category=ActionCategory.INDOOR,
-        title=f"Check outdoor air before airing out at {_forecast_time(best.time, air)}",
+        title=f"Check outdoor air before airing out at {best_time}",
         how=(
             f"If local air has cleared, open windows for {AIRING_MINUTES} minutes to clear "
             "cooking fumes and stale air, then keep them shut through the smoggiest hours."
         ),
         impact=Impact(exposure_reduction_pct=reduction),
         explanation=(
-            f"Fresh air at {clock_time(best.time)} carries {reduction:.0f}% less PM2.5 than at "
-            f"{clock_time(worst.time)} ({best.pm2_5:.0f} vs {worst.pm2_5:.0f} µg/m³)."
+            f"Fresh air at {best_time} carries {reduction:.0f}% less PM2.5 than at "
+            f"{worst_time} ({best.pm2_5:.0f} vs {worst.pm2_5:.0f} µg/m³)."
         ),
         method=(
             "1 - (PM2.5 at the cleanest daytime hour / PM2.5 at the smoggiest hour in the next "

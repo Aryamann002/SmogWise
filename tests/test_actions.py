@@ -81,6 +81,31 @@ def test_moderate_smog_shifts_exercise_to_the_cleanest_hour() -> None:
     assert action.impact.exposure_reduction_pct > 0
 
 
+@pytest.mark.parametrize(
+    ("afternoon_pm", "morning_pm", "best", "worst"),
+    [
+        (80, 10, "08:00 tomorrow", "15:00"),
+        (10, 80, "15:00", "08:00 tomorrow"),
+    ],
+)
+def test_forecast_cards_label_each_hour_with_its_local_day(afternoon_pm, morning_pm, best, worst):
+    payload = air_payload(current_time="2026-11-25T14:30", current_pm25=20)
+    payload["current"]["pm10"] = 30
+    payload["hourly"] = {
+        "time": ["2026-11-25T15:00", "2026-11-26T07:00", "2026-11-26T08:00"],
+        "pm2_5": [afternoon_pm, 40, morning_pm],
+    }
+    actions = generate_actions(make_request(), parse_air_quality(payload, "IN"))
+
+    exercise = _by_id(actions, "exercise-timing")
+    ventilation = _by_id(actions, "ventilation-timing")
+    assert exercise.title.endswith(best)
+    assert f"at {best}," in exercise.explanation
+    assert ventilation.title.endswith(best)
+    assert f"at {best} carries" in ventilation.explanation
+    assert f"at {worst} (" in ventilation.explanation
+
+
 def test_clean_air_and_clean_home_skip_irrelevant_actions() -> None:
     air = make_air(hourly=CLEAN_HOURLY_PM25, current_pm25=5.0, country_code=None)
     ids = _ids(generate_actions(make_request(**WFH_ELECTRIC), air))

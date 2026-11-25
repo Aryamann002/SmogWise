@@ -1,0 +1,18 @@
+{
+  "name": "smogwise-frontend-checks",
+  "private": true,
+  "description": "Type check and browser tests for the SmogWise static frontend.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p jsconfig.json",
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.65.0",
+    "typescript": "6.0.3"
+  },
+  "overrides": {
+    "playwright-core": "1.65.0"
+  }
+}

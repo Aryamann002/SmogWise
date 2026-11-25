@@ -16,3 +16,6 @@ htmlcov/
 !README.md
 challange.txt
 Parameters.txt
+node_modules/
+test-results/
+playwright-report/

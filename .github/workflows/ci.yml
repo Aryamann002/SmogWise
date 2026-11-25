@@ -27,8 +27,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # The browser tests load the page from FastAPI so its real CSP and headers apply.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - run: pip install -r requirements.txt
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      # Strict type check of the browser modules through their JSDoc annotations.
-      - run: npx --yes --package typescript@6.0.3 tsc -p jsconfig.json
+          cache: npm
+      - run: npm ci
+      # Strict type check of the browser modules and tests through their JSDoc annotations.
+      - run: npm run typecheck
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7

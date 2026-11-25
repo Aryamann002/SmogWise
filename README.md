@@ -2,7 +2,7 @@
 
 An AI assistant that helps families and communities get through severe winter smog. You tell it where you live and how you live. It reads the live air-quality forecast and builds a plan with three parts:
 
-- **A low-exposure daily routine** timed around today's cleanest and smoggiest hours.
+- **A low-exposure daily routine** timed around the next 24 hours of local forecasts. Exercise and ventilation cards mark next-day hours as “tomorrow” in both their titles and explanations.
 - **Indoor air fixes** such as purifier sizing, a DIY box-fan filter, sealing gaps and when to open windows.
 - **Cleaner alternatives** for commuting, heating and cooking.
 
@@ -16,7 +16,7 @@ Each recommendation shows **its direct impact** (less PM2.5 breathed, CO₂ avoi
 | Severe winter smog | Advice built around winter inversions (dirty mornings, cleaner afternoons), smoky heating, bonfires, firecrackers and open burning. Carbon monoxide warnings for indoor braziers. |
 | Low-emission daily routines | A timeline (07:00 … 21:00) built from the 24-hour PM2.5 forecast for your location. |
 | Indoor air quality hacks | Clean room with a purifier or a DIY Corsi-Rosenthal filter, sized to your room, plus sealing gaps, timed ventilation and cutting indoor smoke sources. |
-| Sustainable alternatives | Commute switches (metro, train, bus, cycling, walking) and heating and cooking fuel switches (electric, LPG, induction). |
+| Sustainable alternatives | Commute switches (metro, cycling, walking) and heating and cooking fuel switches (electric, LPG, induction). |
 | Tailored to location and lifestyle | Live Open-Meteo data for the chosen place. India gets the CPCB AQI scale, and help such as PMUY LPG subsidies and the CPCB Sameer app. Advice in 8 languages. |
 | Clearly explain the direct impact | Every card shows a number, why it matters for this family and a "How we calculated this" section with the formula and source. |
 
@@ -84,7 +84,7 @@ AQI uses the US EPA 2024 PM2.5 breakpoints, or the India CPCB 2014 breakpoints f
 
 ## Accessibility
 
-- **Automated audit:** no axe-core violations against WCAG 2.1 AA and best-practice rules, checked in light and dark mode at desktop and mobile widths.
+- **Automated audit:** Playwright runs axe-core on the rendered plan in desktop and emulated mobile Chromium. The suite checks WCAG 2.0/2.1 A and AA tags and axe best-practice rules.
 - **Page structure:** semantic landmarks, a skip link, a label for every input and fieldsets with legends.
 - **Screen readers and keyboard:** status messages are announced politely, focus moves to the results heading, focus rings are visible and scroll padding keeps focused elements clear of the sticky header.
 - **Not colour alone:** AQI is shown as text, number and colour together, with text colours chosen per band to meet contrast requirements.
@@ -97,23 +97,33 @@ AQI uses the US EPA 2024 PM2.5 breakpoints, or the India CPCB 2014 breakpoints f
 
 ```bash
 python -m venv .venv
-. .venv/bin/activate            # Windows: .venv\Scripts\activate
+. .venv/bin/activate            # PowerShell on Windows: .\.venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
-export GEMINI_API_KEY=...       # optional; without it the app uses rule-based text
 uvicorn app.main:app --reload   # http://localhost:8000
 ```
 
+For Gemini wording, set `GEMINI_API_KEY` in the environment before starting the server. Without a key the app generates a complete English plan from the forecast and household rules.
+
 ## Test and lint
+
+Activate the Python virtual environment from the local setup above. The frontend checks also use Node.js 24, the version used in CI. Install their dependencies from the repository root.
+
+```bash
+npm ci
+npx playwright install chromium
+```
+
+On a fresh Linux runner, use `npx playwright install --with-deps chromium` to install Chromium's system libraries as well. Then run the checks.
 
 ```bash
 ruff check . && ruff format --check .
 mypy app                        # strict mode, configured in pyproject.toml
 pytest --cov                    # fails under 90% coverage
-npx --package typescript@6.0.3 tsc -p jsconfig.json   # strict type check of static/js via JSDoc
-pytest tests/test_impact.py::test_commute_switch_saving   # a single test
+npm run typecheck               # strict JSDoc checks for browser modules and tests
+npm run test:browser            # desktop Chromium and emulated Pixel 7
 ```
 
-The tests never touch the network. Open-Meteo is mocked with `httpx.MockTransport`, and Gemini and the data client are replaced through FastAPI dependency overrides and injected fakes.
+The Python tests cover the real forecast parser, rules and planner with external services replaced by fakes. The Playwright suite starts FastAPI at `http://127.0.0.1:4173` using the active environment's `python`. It loads the real frontend and intercepts geocoding and plan API requests with fixtures. It checks search and submission, results focus, overnight labels, language tags, the hourly table and accessibility. Both suites run without a Gemini key.
 
 ## Deploy
 
