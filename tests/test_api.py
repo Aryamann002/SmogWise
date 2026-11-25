@@ -27,6 +27,12 @@ def test_frontend_is_served_with_security_headers(client: TestClient) -> None:
     assert response.headers["x-frame-options"] == "DENY"
 
 
+def test_self_hosted_font_has_font_mime_type(client: TestClient) -> None:
+    response = client.get("/fonts/bricolage-grotesque-latin.woff2")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "font/woff2"
+
+
 def test_health_check(client: TestClient) -> None:
     assert client.get("/healthz").json() == {"status": "ok"}
 

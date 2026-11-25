@@ -1,6 +1,7 @@
 """FastAPI entry point: wires dependencies, API routes and the static frontend."""
 
 import logging
+import mimetypes
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -23,6 +24,9 @@ from app.schemas import ErrorResponse, Place, PlanRequest, PlanResponse
 from app.security import SlidingWindowRateLimiter, error_response, install_security
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+# Slim Linux images have no system MIME table entry for WOFF2, so StaticFiles would send
+# the self-hosted font as application/octet-stream.
+mimetypes.add_type("font/woff2", ".woff2")
 
 STATIC_DIR: Final = Path(__file__).resolve().parent.parent / "static"
 HTTP_TIMEOUT: Final = httpx.Timeout(10.0, connect=5.0)
