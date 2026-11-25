@@ -4,9 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="SmogWise builds a family plan for winter smog: a low-exposure daily routine, indoor air fixes and cleaner choices, each with its measured impact.">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0c1620">
   <title>SmogWise, a winter smog coach for families</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%230b6e4f'/%3E%3Cpath d='M7 19c3-4 6-4 9 0s6 4 9 0' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%232dd4bf'/%3E%3Cpath d='M7 19c3-4 6-4 9 0s6 4 9 0' stroke='%230c1620' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preload" href="/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css">
   <script type="module" src="/app.js"></script>
 </head>
@@ -14,198 +16,353 @@
   <a class="skip-link" href="#main">Skip to main content</a>
 
   <header class="site-header">
-    <div class="container site-header__inner">
-      <p class="brand">
+    <nav class="container site-header__inner" aria-label="Main">
+      <a class="brand" href="#top">
         <svg class="brand__logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
           <circle cx="16" cy="16" r="15"></circle>
           <path d="M7 19c3-4 6-4 9 0s6 4 9 0"></path>
         </svg>
         SmogWise
-      </p>
-      <p class="site-header__tagline">Breathe cleaner through winter smog, and help your street do the same.</p>
-    </div>
+      </a>
+      <ul class="nav">
+        <li class="nav__item--secondary"><a href="#how">How it works</a></li>
+        <li class="nav__item--secondary"><a href="#features">What you get</a></li>
+        <li><a class="button button--primary button--small" href="#plan">Get my plan</a></li>
+      </ul>
+    </nav>
   </header>
 
-  <main id="main" class="container" tabindex="-1">
-    <noscript><p class="notice">SmogWise needs JavaScript to fetch live air quality for your area.</p></noscript>
+  <main id="main" tabindex="-1">
+    <noscript><p class="container notice">SmogWise needs JavaScript to fetch live air quality for your area.</p></noscript>
 
-    <section class="panel" aria-labelledby="form-title">
-      <h1 id="form-title">Your family's smog plan</h1>
-      <p class="lead">Tell us where and how you live. We combine the live air-quality forecast with your routine, suggest changes, and show how much each one helps.</p>
-
-      <form id="plan-form" class="plan-form" novalidate>
-        <fieldset class="group">
-          <legend class="group__legend">1. Where do you live?</legend>
-          <div class="search-row">
-            <div class="field search-row__input">
-              <label for="place-query">City or town</label>
-              <input id="place-query" type="search" autocomplete="address-level2" minlength="2" maxlength="80" aria-describedby="place-help" enterkeyhint="search">
-            </div>
-            <button type="button" id="search-button" class="button button--secondary">Search</button>
-            <button type="button" id="locate-button" class="button button--ghost">Use my location</button>
+    <section id="top" class="hero" aria-labelledby="hero-title">
+      <div class="hero__haze" aria-hidden="true"></div>
+      <div class="container hero__inner">
+        <div class="hero__copy">
+          <p class="eyebrow eyebrow--haze"><span class="pulse" aria-hidden="true"></span> Winter smog coach for families</p>
+          <h1 id="hero-title" class="hero__title">Winter smog is here. <span class="hero__accent">Your family's plan</span> to breathe cleaner.</h1>
+          <p class="hero__lead">SmogWise reads the live air-quality forecast for your city and builds a low-emission daily routine, indoor air fixes and cleaner choices for your household, with the direct impact of every change in real numbers.</p>
+          <div class="hero__actions">
+            <a class="button button--primary" href="#plan">Build my family's plan</a>
+            <a class="button button--ghost" href="#how">See how it works</a>
           </div>
-          <p id="place-help" class="help">Search for your city, then choose it from the list.</p>
-          <div class="field">
-            <label for="place-select">Your place</label>
-            <select id="place-select" required disabled>
-              <option value="">Search for your city first</option>
-            </select>
+          <ul class="hero__trust">
+            <li>India CPCB and US EPA air-quality scales</li>
+            <li>Advice in 8 languages</li>
+            <li>Every number from cited formulas</li>
+          </ul>
+        </div>
+
+        <figure class="air-preview" aria-labelledby="air-preview-caption">
+          <div class="air-preview__head">
+            <p class="air-preview__place"><span class="dot dot--haze" aria-hidden="true"></span> Delhi</p>
+            <p class="chip chip--haze">AQI 316 · Very Poor</p>
           </div>
-          <p id="place-status" class="help" role="status"></p>
-        </fieldset>
-
-        <fieldset class="group">
-          <legend class="group__legend">2. Who lives at home?</legend>
-          <div class="grid">
-            <div class="field">
-              <label for="adults">Adults</label>
-              <input id="adults" name="adults" type="number" inputmode="numeric" min="0" max="20" value="2" required>
-            </div>
-            <div class="field">
-              <label for="children">Children</label>
-              <input id="children" name="children" type="number" inputmode="numeric" min="0" max="20" value="0" required>
-            </div>
-            <div class="field">
-              <label for="elderly">People over 65</label>
-              <input id="elderly" name="elderly" type="number" inputmode="numeric" min="0" max="20" value="0" required>
-            </div>
-          </div>
-          <fieldset class="checks">
-            <legend>Anyone at home with:</legend>
-            <label class="check"><input type="checkbox" name="conditions" value="asthma"> Asthma</label>
-            <label class="check"><input type="checkbox" name="conditions" value="copd"> COPD or chronic bronchitis</label>
-            <label class="check"><input type="checkbox" name="conditions" value="heart_disease"> Heart disease</label>
-            <label class="check"><input type="checkbox" name="conditions" value="pregnancy"> Pregnancy</label>
-            <label class="check"><input type="checkbox" name="conditions" value="allergies"> Allergies</label>
-          </fieldset>
-        </fieldset>
-
-        <fieldset class="group">
-          <legend class="group__legend">3. Your daily routine</legend>
-          <div class="grid">
-            <div class="field">
-              <label for="commute-mode">Main way to work or school</label>
-              <select id="commute-mode" name="commute-mode">
-                <option value="car">Car</option>
-                <option value="two_wheeler">Motorbike or scooter</option>
-                <option value="auto_rickshaw">Auto-rickshaw</option>
-                <option value="bus">Bus</option>
-                <option value="metro">Metro or train</option>
-                <option value="bicycle">Bicycle</option>
-                <option value="walk">Walking</option>
-                <option value="work_from_home">Work or study from home</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="distance">One-way distance (km)</label>
-              <input id="distance" name="distance" type="number" inputmode="decimal" min="0" max="200" step="0.5" value="10">
-            </div>
-          </div>
-          <label class="check"><input type="checkbox" id="exercises-outdoors" name="exercises-outdoors" checked> Someone walks, runs or exercises outdoors most days</label>
-        </fieldset>
-
-        <fieldset class="group">
-          <legend class="group__legend">4. Your home</legend>
-          <div class="grid">
-            <div class="field">
-              <label for="heating">Winter heating</label>
-              <select id="heating" name="heating">
-                <option value="none">No heating</option>
-                <option value="electric">Electric heater</option>
-                <option value="gas">Gas heater</option>
-                <option value="kerosene">Kerosene heater</option>
-                <option value="wood">Wood fire or stove</option>
-                <option value="coal">Coal or charcoal brazier</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="cooking">Cooking fuel</label>
-              <select id="cooking" name="cooking">
-                <option value="gas">LPG or piped gas</option>
-                <option value="electric">Electric or induction</option>
-                <option value="kerosene">Kerosene</option>
-                <option value="wood">Wood, dung or crop waste</option>
-                <option value="coal">Coal</option>
-                <option value="none">We don't cook at home</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="room-area">Main room size (m²)</label>
-              <input id="room-area" name="room-area" type="number" inputmode="decimal" min="4" max="200" step="1" value="15" aria-describedby="room-help">
-              <p id="room-help" class="help">A 3 × 5 m bedroom is 15 m².</p>
-            </div>
-          </div>
-          <label class="check"><input type="checkbox" id="has-purifier" name="has-purifier"> We own an air purifier</label>
-        </fieldset>
-
-        <fieldset class="group">
-          <legend class="group__legend">5. Preferences</legend>
-          <div class="grid">
-            <div class="field">
-              <label for="language">Language for advice</label>
-              <select id="language" name="language">
-                <option value="en">English</option>
-                <option value="hi" lang="hi">हिन्दी (Hindi)</option>
-                <option value="bn" lang="bn">বাংলা (Bengali)</option>
-                <option value="mr" lang="mr">मराठी (Marathi)</option>
-                <option value="ta" lang="ta">தமிழ் (Tamil)</option>
-                <option value="te" lang="te">తెలుగు (Telugu)</option>
-                <option value="es" lang="es">Español (Spanish)</option>
-                <option value="zh" lang="zh">中文 (Chinese)</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="community">Homes on your street or in your building</label>
-              <input id="community" name="community" type="number" inputmode="numeric" min="1" max="10000" value="50">
-            </div>
-          </div>
-          <div class="field">
-            <label for="notes">Anything else? <span class="optional">(optional)</span></label>
-            <textarea id="notes" name="notes" rows="3" maxlength="300" aria-describedby="notes-count"></textarea>
-            <p id="notes-count" class="help">0 of 300 characters</p>
-          </div>
-        </fieldset>
-
-        <p id="form-error" class="alert" role="alert" hidden></p>
-        <button type="submit" id="submit-button" class="button button--primary">Get my plan</button>
-        <p id="plan-status" class="help" role="status"></p>
-      </form>
-    </section>
-
-    <section id="results" class="results" aria-labelledby="results-title" hidden>
-      <h2 id="results-title" tabindex="-1">Your plan</h2>
-
-      <div class="air-card">
-        <p id="aqi-badge" class="aqi-badge">
-          <span id="aqi-value" class="aqi-badge__value"></span>
-          <span id="aqi-label" class="aqi-badge__label"></span>
-        </p>
-        <dl class="stats">
-          <div><dt>PM2.5 now</dt><dd id="pm-now"></dd></div>
-          <div><dt>Cleanest hour</dt><dd id="best-hour"></dd></div>
-          <div><dt>Smoggiest hour</dt><dd id="worst-hour"></dd></div>
-        </dl>
-        <figure class="forecast">
-          <svg id="forecast-chart" class="forecast__chart" viewBox="0 0 600 120" preserveAspectRatio="none" aria-hidden="true" focusable="false"></svg>
-          <figcaption id="forecast-caption" class="help"></figcaption>
+          <svg class="air-preview__chart" viewBox="0 0 320 120" aria-hidden="true" focusable="false">
+            <path class="air-preview__area" d="M0 40 C40 20 70 12 100 30 S150 92 190 96 S260 70 320 34 V120 H0 Z"></path>
+            <path class="air-preview__line" pathLength="1" d="M0 40 C40 20 70 12 100 30 S150 92 190 96 S260 70 320 34"></path>
+            <circle class="air-preview__worst" cx="62" cy="16" r="6"></circle>
+            <circle class="air-preview__best" cx="190" cy="96" r="6"></circle>
+          </svg>
+          <dl class="air-preview__stats">
+            <div><dt>Smoggiest</dt><dd class="text-haze">08:00</dd></div>
+            <div><dt>Cleanest</dt><dd class="text-clean">15:00</dd></div>
+            <div><dt>Your window</dt><dd>Air out at 15:00</dd></div>
+          </dl>
+          <figcaption id="air-preview-caption" class="air-preview__caption">Example: 24-hour PM2.5 forecast for a smoggy winter day in Delhi.</figcaption>
         </figure>
       </div>
+    </section>
 
-      <p id="summary" class="summary"></p>
+    <section class="section section--tinted" aria-labelledby="problem-title">
+      <div class="container">
+        <p class="eyebrow eyebrow--haze">The problem</p>
+        <h2 id="problem-title" class="section__title">Why winter smog needs a different plan</h2>
+        <ul class="cards cards--three">
+          <li class="card reveal">
+            <svg class="card__icon card__icon--haze" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 8h18M5 12h14M3 16h18M12 3v3M12 18v3"></path></svg>
+            <h3 class="card__title">Winter traps the smoke</h3>
+            <p>Cold nights form an inversion, a lid of warm air that holds traffic, heating and burning smoke at breathing height until the afternoon sun lifts it.</p>
+            <p class="card__figure text-haze">Mornings are worst</p>
+            <p class="card__note">So when you go out matters as much as whether you go out.</p>
+          </li>
+          <li class="card reveal">
+            <svg class="card__icon card__icon--sky" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6"></path></svg>
+            <h3 class="card__title">Smog comes indoors</h3>
+            <p>Fine PM2.5 particles slip through gaps around doors and windows, so closing up alone does not keep a home clean.</p>
+            <p class="card__figure text-sky">About 71%</p>
+            <p class="card__note">of outdoor PM2.5 reaches a typical room with no filter (our indoor mass-balance model).</p>
+          </li>
+          <li class="card reveal">
+            <svg class="card__icon card__icon--clean" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6M14 20c0-2.5 1.3-5 3.5-5S21 17.5 21 20"></path></svg>
+            <h3 class="card__title">Every home adds to it</h3>
+            <p>Household heating, cooking and commuting feed the same shared air, so small changes multiply across a street or building.</p>
+            <p class="card__figure text-clean">60 g a day</p>
+            <p class="card__note">of PM2.5 from one home heating with wood (EMEP/EEA emission factors).</p>
+          </li>
+        </ul>
+      </div>
+    </section>
 
-      <h3>Your day</h3>
-      <ol id="routine" class="routine"></ol>
+    <section id="how" class="section" aria-labelledby="how-title">
+      <div class="container">
+        <p class="eyebrow">How it works</p>
+        <h2 id="how-title" class="section__title">Three steps to cleaner air at home</h2>
+        <ol class="cards cards--three steps">
+          <li class="card reveal">
+            <h3 class="card__title">Tell us where and how you live</h3>
+            <p>Your city, who lives at home, how you get to work or school, and how you heat and cook.</p>
+          </li>
+          <li class="card reveal">
+            <h3 class="card__title">We read the live forecast</h3>
+            <p>Hourly PM2.5 from Open-Meteo and Copernicus, rated on the India CPCB or US EPA scale for your location.</p>
+          </li>
+          <li class="card reveal">
+            <h3 class="card__title">Get a plan with real numbers</h3>
+            <p>Google Gemini explains each step in your language. The impact figures come from tested formulas, never from the AI.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
 
-      <h3>What to change, and what it does</h3>
-      <ul id="actions" class="actions"></ul>
+    <section id="features" class="section section--tinted" aria-labelledby="features-title">
+      <div class="container">
+        <p class="eyebrow">What you get</p>
+        <h2 id="features-title" class="section__title">A plan tailored to your location and lifestyle</h2>
+        <ul class="cards cards--three">
+          <li class="card feature reveal">
+            <svg class="card__icon card__icon--clean" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+            <h3 class="card__title">Low-emission daily routine</h3>
+            <p>A timeline built around today's cleanest and smoggiest hours: when to exercise, commute and open the windows.</p>
+            <p class="chip chip--clean">Timed to your forecast</p>
+          </li>
+          <li class="card feature reveal">
+            <svg class="card__icon card__icon--sky" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M8 4v16M12 4v16M16 4v16"></path></svg>
+            <h3 class="card__title">Indoor air quality hacks</h3>
+            <p>Purifier sizing for your room, a DIY box-fan filter, sealing gaps and safe ventilation windows.</p>
+            <p class="chip chip--sky">−95% PM2.5 in one room</p>
+          </li>
+          <li class="card feature reveal">
+            <svg class="card__icon card__icon--haze" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14zM5 19l7-7"></path></svg>
+            <h3 class="card__title">Sustainable alternatives</h3>
+            <p>Cleaner commutes, heating and cooking: metro instead of the car, electric or LPG instead of wood and coal.</p>
+            <p class="chip chip--haze">3.3 kg CO₂ saved a day</p>
+          </li>
+        </ul>
+        <p class="section__footnote">Example figures for a Delhi family of four with a 12 km car commute, wood heating and a 15 m² bedroom.</p>
+      </div>
+    </section>
 
-      <section class="community" aria-labelledby="community-title">
-        <h3 id="community-title">If your neighbours join in</h3>
-        <p id="community-text"></p>
-      </section>
+    <section class="section" aria-labelledby="trust-title">
+      <div class="container trust reveal">
+        <div>
+          <p class="eyebrow">Numbers you can check</p>
+          <h2 id="trust-title" class="section__title">The AI writes the words. Code does the maths.</h2>
+          <p>Every figure comes from published emission factors and a tested indoor-air model. Gemini only ranks and explains the actions, so it cannot change a number. Each card in your plan shows how its figure was calculated.</p>
+        </div>
+        <ul class="formulas">
+          <li><span>Indoor air</span> <code>C_in / C_out = ACH ÷ (ACH + k + CADR/V)</code></li>
+          <li><span>Commute</span> <code>CO₂ saved = (factor_now − factor_new) × km × 2</code></li>
+          <li><span>Fuel switch</span> <code>PM2.5 = emission factor × kg burned a day</code></li>
+        </ul>
+      </div>
+    </section>
 
-      <p id="source-note" class="help"></p>
-      <button type="button" id="print-button" class="button button--secondary">Print or save this plan</button>
+    <section id="plan" class="section section--tinted" aria-labelledby="form-title">
+      <div class="container container--narrow">
+        <p class="eyebrow">Your plan</p>
+        <h2 id="form-title" class="section__title">Build your family's plan</h2>
+        <p class="lead">It takes about a minute. No sign-up, and your answers are never saved to a database.</p>
+
+        <form id="plan-form" class="panel plan-form" novalidate>
+          <fieldset class="group">
+            <legend class="group__legend"><span class="group__number" aria-hidden="true">1</span> Where do you live?</legend>
+            <div class="search-row">
+              <div class="field search-row__input">
+                <label for="place-query">City or town</label>
+                <input id="place-query" type="search" autocomplete="address-level2" minlength="2" maxlength="80" aria-describedby="place-help" enterkeyhint="search">
+              </div>
+              <button type="button" id="search-button" class="button button--secondary">Search</button>
+              <button type="button" id="locate-button" class="button button--ghost">Use my location</button>
+            </div>
+            <p id="place-help" class="help">Search for your city, then choose it from the list.</p>
+            <div class="field">
+              <label for="place-select">Your place</label>
+              <select id="place-select" required disabled>
+                <option value="">Search for your city first</option>
+              </select>
+            </div>
+            <p id="place-status" class="help" role="status"></p>
+          </fieldset>
+
+          <fieldset class="group">
+            <legend class="group__legend"><span class="group__number" aria-hidden="true">2</span> Who lives at home?</legend>
+            <div class="grid">
+              <div class="field">
+                <label for="adults">Adults</label>
+                <input id="adults" name="adults" type="number" inputmode="numeric" min="0" max="20" value="2" required>
+              </div>
+              <div class="field">
+                <label for="children">Children</label>
+                <input id="children" name="children" type="number" inputmode="numeric" min="0" max="20" value="0" required>
+              </div>
+              <div class="field">
+                <label for="elderly">People over 65</label>
+                <input id="elderly" name="elderly" type="number" inputmode="numeric" min="0" max="20" value="0" required>
+              </div>
+            </div>
+            <fieldset class="checks">
+              <legend>Anyone at home with:</legend>
+              <label class="check"><input type="checkbox" name="conditions" value="asthma"> Asthma</label>
+              <label class="check"><input type="checkbox" name="conditions" value="copd"> COPD or chronic bronchitis</label>
+              <label class="check"><input type="checkbox" name="conditions" value="heart_disease"> Heart disease</label>
+              <label class="check"><input type="checkbox" name="conditions" value="pregnancy"> Pregnancy</label>
+              <label class="check"><input type="checkbox" name="conditions" value="allergies"> Allergies</label>
+            </fieldset>
+          </fieldset>
+
+          <fieldset class="group">
+            <legend class="group__legend"><span class="group__number" aria-hidden="true">3</span> Your daily routine</legend>
+            <div class="grid">
+              <div class="field">
+                <label for="commute-mode">Main way to work or school</label>
+                <select id="commute-mode" name="commute-mode">
+                  <option value="car">Car</option>
+                  <option value="two_wheeler">Motorbike or scooter</option>
+                  <option value="auto_rickshaw">Auto-rickshaw</option>
+                  <option value="bus">Bus</option>
+                  <option value="metro">Metro or train</option>
+                  <option value="bicycle">Bicycle</option>
+                  <option value="walk">Walking</option>
+                  <option value="work_from_home">Work or study from home</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="distance">One-way distance (km)</label>
+                <input id="distance" name="distance" type="number" inputmode="decimal" min="0" max="200" step="0.5" value="10">
+              </div>
+            </div>
+            <label class="check"><input type="checkbox" id="exercises-outdoors" name="exercises-outdoors" checked> Someone walks, runs or exercises outdoors most days</label>
+          </fieldset>
+
+          <fieldset class="group">
+            <legend class="group__legend"><span class="group__number" aria-hidden="true">4</span> Your home</legend>
+            <div class="grid">
+              <div class="field">
+                <label for="heating">Winter heating</label>
+                <select id="heating" name="heating">
+                  <option value="none">No heating</option>
+                  <option value="electric">Electric heater</option>
+                  <option value="gas">Gas heater</option>
+                  <option value="kerosene">Kerosene heater</option>
+                  <option value="wood">Wood fire or stove</option>
+                  <option value="coal">Coal or charcoal brazier</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="cooking">Cooking fuel</label>
+                <select id="cooking" name="cooking">
+                  <option value="gas">LPG or piped gas</option>
+                  <option value="electric">Electric or induction</option>
+                  <option value="kerosene">Kerosene</option>
+                  <option value="wood">Wood, dung or crop waste</option>
+                  <option value="coal">Coal</option>
+                  <option value="none">We don't cook at home</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="room-area">Main room size (m²)</label>
+                <input id="room-area" name="room-area" type="number" inputmode="decimal" min="4" max="200" step="1" value="15" aria-describedby="room-help">
+                <p id="room-help" class="help">A 3 × 5 m bedroom is 15 m².</p>
+              </div>
+            </div>
+            <label class="check"><input type="checkbox" id="has-purifier" name="has-purifier"> We own an air purifier</label>
+          </fieldset>
+
+          <fieldset class="group">
+            <legend class="group__legend"><span class="group__number" aria-hidden="true">5</span> Preferences</legend>
+            <div class="grid">
+              <div class="field">
+                <label for="language">Language for advice</label>
+                <select id="language" name="language">
+                  <option value="en">English</option>
+                  <option value="hi" lang="hi">हिन्दी (Hindi)</option>
+                  <option value="bn" lang="bn">বাংলা (Bengali)</option>
+                  <option value="mr" lang="mr">मराठी (Marathi)</option>
+                  <option value="ta" lang="ta">தமிழ் (Tamil)</option>
+                  <option value="te" lang="te">తెలుగు (Telugu)</option>
+                  <option value="es" lang="es">Español (Spanish)</option>
+                  <option value="zh" lang="zh">中文 (Chinese)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="community">Homes on your street or in your building</label>
+                <input id="community" name="community" type="number" inputmode="numeric" min="1" max="10000" value="50">
+              </div>
+            </div>
+            <div class="field">
+              <label for="notes">Anything else? <span class="optional">(optional)</span></label>
+              <textarea id="notes" name="notes" rows="3" maxlength="300" aria-describedby="notes-count"></textarea>
+              <p id="notes-count" class="help">0 of 300 characters</p>
+            </div>
+          </fieldset>
+
+          <p id="form-error" class="alert" role="alert" hidden></p>
+          <button type="submit" id="submit-button" class="button button--primary button--block">Get my plan</button>
+          <p id="plan-status" class="help" role="status"></p>
+        </form>
+      </div>
+    </section>
+
+    <section id="results" class="section results" aria-labelledby="results-title" hidden>
+      <div class="container">
+        <div class="results__head">
+          <h2 id="results-title" class="section__title" tabindex="-1">Your plan</h2>
+          <button type="button" id="print-button" class="button button--ghost">Print or save this plan</button>
+        </div>
+
+        <div class="panel air-card">
+          <p id="aqi-badge" class="aqi-badge">
+            <span id="aqi-value" class="aqi-badge__value"></span>
+            <span id="aqi-label" class="aqi-badge__label"></span>
+          </p>
+          <dl class="stats">
+            <div><dt>PM2.5 now</dt><dd id="pm-now"></dd></div>
+            <div><dt>Cleanest hour</dt><dd id="best-hour" class="text-clean"></dd></div>
+            <div><dt>Smoggiest hour</dt><dd id="worst-hour" class="text-haze"></dd></div>
+          </dl>
+          <figure class="forecast">
+            <svg id="forecast-chart" class="forecast__chart" viewBox="0 0 600 120" preserveAspectRatio="none" aria-hidden="true" focusable="false"></svg>
+            <figcaption id="forecast-caption" class="help"></figcaption>
+          </figure>
+        </div>
+
+        <p id="summary" class="summary"></p>
+
+        <div class="results__grid">
+          <section class="panel" aria-labelledby="routine-title">
+            <h3 id="routine-title" class="results__subtitle">Your day</h3>
+            <ol id="routine" class="routine"></ol>
+          </section>
+          <section aria-labelledby="actions-title">
+            <h3 id="actions-title" class="results__subtitle">What to change, and what it does</h3>
+            <ul id="actions" class="actions"></ul>
+          </section>
+        </div>
+
+        <section class="panel community" aria-labelledby="community-title">
+          <div>
+            <h3 id="community-title" class="results__subtitle">If your neighbours join in</h3>
+            <p id="community-text"></p>
+          </div>
+          <dl class="community__stats">
+            <div><dt>CO₂ avoided a day</dt><dd id="community-co2" class="text-clean"></dd></div>
+            <div><dt>PM2.5 kept out of shared air a day</dt><dd id="community-pm" class="text-haze"></dd></div>
+          </dl>
+        </section>
+
+        <p id="source-note" class="help"></p>
+      </div>
     </section>
   </main>
 

@@ -76,15 +76,16 @@ AQI uses the US EPA 2024 PM2.5 breakpoints, or the India CPCB 2014 breakpoints f
 - **One shared HTTP client:** a single `httpx.AsyncClient` serves all outbound requests.
 - **Caching:** TTL plus LRU caches hold air quality (30 minutes, coordinates rounded to about 1 km), geocoding (24 hours) and Gemini plans (15 minutes).
 - **Gemini cost:** one Gemini call per plan, at low thinking level, with a hard 25-second timeout.
-- **Small, compressed frontend:** GZip responses, and three static files with no framework, no images and no build step.
+- **Small, compressed frontend:** GZip responses, three static files and one self-hosted 77 KB headline font, with no framework, no images and no build step.
+- **Cheap animation:** CSS only, animating `transform`, `opacity` and `clip-path`. Section reveals use scroll-driven CSS animations, so no JavaScript runs on scroll.
 
 ## Accessibility
 
 - **Automated audit:** no axe-core violations against WCAG 2.1 AA and best-practice rules, checked in light and dark mode at desktop and mobile widths.
 - **Page structure:** semantic landmarks, a skip link, a label for every input and fieldsets with legends.
-- **Screen readers and keyboard:** status messages are announced politely, focus moves to the results heading and focus rings are visible.
+- **Screen readers and keyboard:** status messages are announced politely, focus moves to the results heading, focus rings are visible and scroll padding keeps focused elements clear of the sticky header.
 - **Not colour alone:** AQI is shown as text, number and colour together, with text colours chosen per band to meet contrast requirements.
-- **Display settings:** supports `prefers-color-scheme` and `prefers-reduced-motion`, uses a mobile-first layout sized in rem units, and has 44 px touch targets.
+- **Display settings:** supports `prefers-color-scheme` (dark by default, with a light theme) and `prefers-reduced-motion` (every animation is off unless motion is allowed), uses a mobile-first layout sized in rem units, and has 44 px touch targets.
 - **Language:** advice in English, Hindi, Bengali, Marathi, Tamil, Telugu, Spanish and Chinese, with the correct `lang` attributes for screen readers.
 - **Print:** a print stylesheet lets the plan go on the fridge.
 

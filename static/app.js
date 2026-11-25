@@ -10,7 +10,7 @@
 /** @typedef {{id: string, category: string, title: string, how: string, impact: Impact, explanation: string, method: string}} Action */
 /** @typedef {{time: string, activity: string, why: string}} RoutineStep */
 /** @typedef {{aqi: number, aqi_scale: string, category: string, level: number, pm2_5: number, best_hour: HourlyPm, worst_hour: HourlyPm, forecast: HourlyPm[]}} AirQuality */
-/** @typedef {{households: number, co2_kg_per_day: number, pm25_g_per_day: number}} Community */
+/** @typedef {{households: number, co2_kg_per_day: number|null, pm25_g_per_day: number|null}} Community */
 /** @typedef {{location: string, air: AirQuality, summary: string, routine: RoutineStep[], actions: Action[], community: Community, source: 'gemini'|'rules'}} Plan */
 
 const API = Object.freeze({ geocode: '/api/geocode', plan: '/api/plan' });
@@ -69,6 +69,8 @@ const dom = {
   routine: byId('routine'),
   actions: byId('actions'),
   communityText: byId('community-text'),
+  communityCo2: byId('community-co2'),
+  communityPm: byId('community-pm'),
   sourceNote: byId('source-note'),
   printButton: /** @type {HTMLButtonElement} */ (byId('print-button')),
   routineTemplate: /** @type {HTMLTemplateElement} */ (byId('routine-template')),
@@ -279,18 +281,21 @@ function renderChart(air) {
   const x = (/** @type {number} */ i) => padding + (i * (width - 2 * padding)) / Math.max(values.length - 1, 1);
   const y = (/** @type {number} */ v) => height - padding - (v / max) * (height - 2 * padding);
   const points = values.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+  const baseline = height - padding;
+  const area = `${x(0)},${baseline} ${points} ${x(values.length - 1)},${baseline}`;
   const marker = (/** @type {HourlyPm} */ hour, /** @type {string} */ className) => {
     const index = air.forecast.findIndex((point) => point.time === hour.time);
     return svg('circle', { cx: x(index), cy: y(hour.pm2_5), r: markerRadius, class: className });
   };
   dom.chart.replaceChildren(
+    svg('polygon', { points: area, class: 'forecast__area' }),
     svg('polyline', { points, class: 'forecast__line' }),
     marker(air.best_hour, 'forecast__best'),
     marker(air.worst_hour, 'forecast__worst'),
   );
   dom.chartCaption.textContent =
-    `Next 24 hours of PM2.5: cleanest at ${clock(air.best_hour.time)} (green dot), ` +
-    `smoggiest at ${clock(air.worst_hour.time)} (red dot).`;
+    `Next 24 hours of PM2.5: cleanest at ${clock(air.best_hour.time)} (teal dot), ` +
+    `smoggiest at ${clock(air.worst_hour.time)} (amber dot).`;
 }
 
 /** @param {RoutineStep[]} routine */
@@ -363,13 +368,19 @@ function renderAction(action, lang) {
   return item;
 }
 
+/** @param {number|null} grams */
+function mass(grams) {
+  const value = grams ?? 0;
+  return value < 1000 ? `${number.format(value)} g` : `${number.format(value / 1000)} kg`;
+}
+
 /** @param {Community} community */
-function communityMessage(community) {
-  return (
+function renderCommunity(community) {
+  dom.communityText.textContent =
     `If ${number.format(community.households)} households near you made the same changes, ` +
-    `together you would avoid about ${number.format(community.co2_kg_per_day)} kg of CO₂ and keep ` +
-    `${number.format(community.pm25_g_per_day / 1000)} kg of PM2.5 out of your shared air every day.`
-  );
+    'this is what your shared air would be spared every day.';
+  dom.communityCo2.textContent = `${number.format(community.co2_kg_per_day ?? 0)} kg`;
+  dom.communityPm.textContent = mass(community.pm25_g_per_day);
 }
 
 /**
@@ -385,7 +396,7 @@ function renderPlan(plan, language) {
   dom.routine.lang = lang;
   renderRoutine(plan.routine);
   dom.actions.replaceChildren(...plan.actions.map((action) => renderAction(action, lang)));
-  dom.communityText.textContent = communityMessage(plan.community);
+  renderCommunity(plan.community);
   dom.sourceNote.textContent =
     plan.source === 'gemini'
       ? 'Explanations written by Google Gemini. Every number comes from the formulas shown under each card.'
