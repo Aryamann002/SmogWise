@@ -16,8 +16,14 @@
 const API = Object.freeze({ geocode: '/api/geocode', plan: '/api/plan' });
 const MIN_QUERY_LENGTH = 2;
 const NOTES_MAX = 300;
-const CHART = Object.freeze({ width: 600, height: 120, padding: 10, markerRadius: 6 });
-const SVG_NS = 'http://www.w3.org/2000/svg';
+const HOURS_PER_AXIS_LABEL = 6;
+// Illustrative Delhi winter day for the landing-page card, shaped like a real hourly forecast.
+const EXAMPLE_DAY = [
+  104, 103, 104, 106, 107, 107, 116, 139, 160, 132, 113, 101, 84, 69, 63, 60, 70, 92, 113, 127, 134,
+  137, 140, 140,
+].map((pm2_5, hour) => ({ time: `2026-01-15T${String(hour).padStart(2, '0')}:00`, pm2_5 }));
+const EXAMPLE_CLEANEST = EXAMPLE_DAY[15];
+const EXAMPLE_SMOGGIEST = EXAMPLE_DAY[8];
 // ponytail: geolocation gives no country, so infer India from the time zone for its AQI scale.
 const INDIA_TIME_ZONES = new Set(['Asia/Kolkata', 'Asia/Calcutta']);
 const CATEGORY_LABELS = Object.freeze({
@@ -63,8 +69,10 @@ const dom = {
   pmNow: byId('pm-now'),
   bestHour: byId('best-hour'),
   worstHour: byId('worst-hour'),
-  chart: /** @type {SVGSVGElement} */ (/** @type {unknown} */ (byId('forecast-chart'))),
+  previewChart: byId('preview-chart'),
+  chart: byId('forecast-chart'),
   chartCaption: byId('forecast-caption'),
+  forecastRows: byId('forecast-rows'),
   summary: byId('summary'),
   routine: byId('routine'),
   actions: byId('actions'),
@@ -260,42 +268,60 @@ function renderAir(air) {
   dom.pmNow.textContent = pm(air.pm2_5);
   dom.bestHour.textContent = `${clock(air.best_hour.time)}, ${pm(air.best_hour.pm2_5)}`;
   dom.worstHour.textContent = `${clock(air.worst_hour.time)}, ${pm(air.worst_hour.pm2_5)}`;
-  renderChart(air);
+  renderBars(dom.chart, air.forecast, air.best_hour, air.worst_hour);
+  renderForecastTable(air.forecast);
+  dom.chartCaption.textContent =
+    `PM2.5 for the next 24 hours: cleanest at ${clock(air.best_hour.time)}, ` +
+    `smoggiest at ${clock(air.worst_hour.time)}.`;
 }
 
 /**
- * @param {string} name
- * @param {Record<string, string|number>} attributes
+ * Draw an hourly PM2.5 column chart; the cleanest and smoggiest hours get their own colour.
+ * Heights go through a CSS custom property because the CSP forbids inline style attributes.
+ * @param {HTMLElement} chart
+ * @param {HourlyPm[]} hours
+ * @param {HourlyPm} cleanest
+ * @param {HourlyPm} smoggiest
  */
-function svg(name, attributes) {
-  const element = document.createElementNS(SVG_NS, name);
-  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, String(value));
-  return element;
+function renderBars(chart, hours, cleanest, smoggiest) {
+  const max = Math.max(...hours.map((hour) => hour.pm2_5), 1);
+  const plot = document.createElement('div');
+  const axis = document.createElement('div');
+  plot.className = 'bars__plot';
+  axis.className = 'bars__axis';
+  hours.forEach((hour, index) => {
+    const bar = document.createElement('span');
+    bar.className = 'bars__bar';
+    bar.classList.toggle('bars__bar--cleanest', hour.time === cleanest.time);
+    bar.classList.toggle('bars__bar--smoggiest', hour.time === smoggiest.time);
+    bar.dataset.tip = `${clock(hour.time)} · ${pm(hour.pm2_5)}`;
+    bar.style.setProperty('--value', String(hour.pm2_5 / max));
+    bar.style.setProperty('--index', String(index));
+    plot.append(bar);
+    if (index % HOURS_PER_AXIS_LABEL === 0) {
+      const label = document.createElement('span');
+      label.textContent = clock(hour.time);
+      label.style.gridColumn = `${index + 1} / span ${HOURS_PER_AXIS_LABEL}`;
+      axis.append(label);
+    }
+  });
+  chart.replaceChildren(plot, axis);
 }
 
-/** @param {AirQuality} air */
-function renderChart(air) {
-  const { width, height, padding, markerRadius } = CHART;
-  const values = air.forecast.map((point) => point.pm2_5);
-  const max = Math.max(...values, 1);
-  const x = (/** @type {number} */ i) => padding + (i * (width - 2 * padding)) / Math.max(values.length - 1, 1);
-  const y = (/** @type {number} */ v) => height - padding - (v / max) * (height - 2 * padding);
-  const points = values.map((v, i) => `${x(i)},${y(v)}`).join(' ');
-  const baseline = height - padding;
-  const area = `${x(0)},${baseline} ${points} ${x(values.length - 1)},${baseline}`;
-  const marker = (/** @type {HourlyPm} */ hour, /** @type {string} */ className) => {
-    const index = air.forecast.findIndex((point) => point.time === hour.time);
-    return svg('circle', { cx: x(index), cy: y(hour.pm2_5), r: markerRadius, class: className });
-  };
-  dom.chart.replaceChildren(
-    svg('polygon', { points: area, class: 'forecast__area' }),
-    svg('polyline', { points, class: 'forecast__line' }),
-    marker(air.best_hour, 'forecast__best'),
-    marker(air.worst_hour, 'forecast__worst'),
+/** @param {HourlyPm[]} hours the same values as the chart, for screen readers and keyboard users */
+function renderForecastTable(hours) {
+  dom.forecastRows.replaceChildren(
+    ...hours.map((hour) => {
+      const row = document.createElement('tr');
+      const time = document.createElement('th');
+      const value = document.createElement('td');
+      time.scope = 'row';
+      time.textContent = clock(hour.time);
+      value.textContent = number.format(Math.round(hour.pm2_5));
+      row.append(time, value);
+      return row;
+    }),
   );
-  dom.chartCaption.textContent =
-    `Next 24 hours of PM2.5: cleanest at ${clock(air.best_hour.time)} (teal dot), ` +
-    `smoggiest at ${clock(air.worst_hour.time)} (amber dot).`;
 }
 
 /** @param {RoutineStep[]} routine */
@@ -410,6 +436,7 @@ function updateNotesCount() {
   dom.notesCount.textContent = `${dom.notes.value.length} of ${NOTES_MAX} characters`;
 }
 
+renderBars(dom.previewChart, EXAMPLE_DAY, EXAMPLE_CLEANEST, EXAMPLE_SMOGGIEST);
 dom.searchButton.addEventListener('click', searchPlaces);
 dom.placeQuery.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {

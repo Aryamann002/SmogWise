@@ -85,6 +85,7 @@ AQI uses the US EPA 2024 PM2.5 breakpoints, or the India CPCB 2014 breakpoints f
 - **Page structure:** semantic landmarks, a skip link, a label for every input and fieldsets with legends.
 - **Screen readers and keyboard:** status messages are announced politely, focus moves to the results heading, focus rings are visible and scroll padding keeps focused elements clear of the sticky header.
 - **Not colour alone:** AQI is shown as text, number and colour together, with text colours chosen per band to meet contrast requirements.
+- **Charts:** the hourly PM2.5 chart has a text caption, a colour key and an "Hourly values" table for screen-reader and keyboard users. Its colours pass a colour-blindness check in both light and dark mode.
 - **Display settings:** supports `prefers-color-scheme` (dark by default, with a light theme) and `prefers-reduced-motion` (every animation is off unless motion is allowed), uses a mobile-first layout sized in rem units, and has 44 px touch targets.
 - **Language:** advice in English, Hindi, Bengali, Marathi, Tamil, Telugu, Spanish and Chinese, with the correct `lang` attributes for screen readers.
 - **Print:** a print stylesheet lets the plan go on the fridge.

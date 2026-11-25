@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="SmogWise builds a family plan for winter smog: a low-exposure daily routine, indoor air fixes and cleaner choices, each with its measured impact.">
-  <meta name="color-scheme" content="dark light">
-  <meta name="theme-color" content="#0c1620">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7fafc">
   <title>SmogWise, a winter smog coach for families</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%232dd4bf'/%3E%3Cpath d='M7 19c3-4 6-4 9 0s6 4 9 0' stroke='%230c1620' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%230369a1'/%3E%3Cpath d='M7 19c3-4 6-4 9 0s6 4 9 0' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="preload" href="/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css">
   <script type="module" src="/app.js"></script>
@@ -58,16 +58,15 @@
             <p class="air-preview__place"><span class="dot dot--haze" aria-hidden="true"></span> Delhi</p>
             <p class="chip chip--haze">AQI 316 · Very Poor</p>
           </div>
-          <svg class="air-preview__chart" viewBox="0 0 320 120" aria-hidden="true" focusable="false">
-            <path class="air-preview__area" d="M0 40 C40 20 70 12 100 30 S150 92 190 96 S260 70 320 34 V120 H0 Z"></path>
-            <path class="air-preview__line" pathLength="1" d="M0 40 C40 20 70 12 100 30 S150 92 190 96 S260 70 320 34"></path>
-            <circle class="air-preview__worst" cx="62" cy="16" r="6"></circle>
-            <circle class="air-preview__best" cx="190" cy="96" r="6"></circle>
-          </svg>
+          <div id="preview-chart" class="bars bars--compact" aria-hidden="true"></div>
+          <ul class="bars__key" aria-hidden="true">
+            <li><span class="swatch swatch--cleanest"></span>Cleanest hour</li>
+            <li><span class="swatch swatch--smoggiest"></span>Smoggiest hour</li>
+          </ul>
           <dl class="air-preview__stats">
-            <div><dt>Smoggiest</dt><dd class="text-haze">08:00</dd></div>
-            <div><dt>Cleanest</dt><dd class="text-clean">15:00</dd></div>
-            <div><dt>Your window</dt><dd>Air out at 15:00</dd></div>
+            <div><dt>Smoggiest</dt><dd>08:00</dd></div>
+            <div><dt>Cleanest</dt><dd>15:00</dd></div>
+            <div><dt>Air out at</dt><dd>15:00</dd></div>
           </dl>
           <figcaption id="air-preview-caption" class="air-preview__caption">Example: 24-hour PM2.5 forecast for a smoggy winter day in Delhi.</figcaption>
         </figure>
@@ -90,14 +89,14 @@
             <svg class="card__icon card__icon--sky" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6"></path></svg>
             <h3 class="card__title">Smog comes indoors</h3>
             <p>Fine PM2.5 particles slip through gaps around doors and windows, so closing up alone does not keep a home clean.</p>
-            <p class="card__figure text-sky">About 71%</p>
+            <p class="card__figure text-haze">About 71%</p>
             <p class="card__note">of outdoor PM2.5 reaches a typical room with no filter (our indoor mass-balance model).</p>
           </li>
           <li class="card reveal">
             <svg class="card__icon card__icon--clean" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6M14 20c0-2.5 1.3-5 3.5-5S21 17.5 21 20"></path></svg>
             <h3 class="card__title">Every home adds to it</h3>
             <p>Household heating, cooking and commuting feed the same shared air, so small changes multiply across a street or building.</p>
-            <p class="card__figure text-clean">60 g a day</p>
+            <p class="card__figure text-haze">60 g a day</p>
             <p class="card__note">of PM2.5 from one home heating with wood (EMEP/EEA emission factors).</p>
           </li>
         </ul>
@@ -328,12 +327,23 @@
           </p>
           <dl class="stats">
             <div><dt>PM2.5 now</dt><dd id="pm-now"></dd></div>
-            <div><dt>Cleanest hour</dt><dd id="best-hour" class="text-clean"></dd></div>
-            <div><dt>Smoggiest hour</dt><dd id="worst-hour" class="text-haze"></dd></div>
+            <div><dt>Cleanest hour</dt><dd id="best-hour"></dd></div>
+            <div><dt>Smoggiest hour</dt><dd id="worst-hour"></dd></div>
           </dl>
-          <figure class="forecast">
-            <svg id="forecast-chart" class="forecast__chart" viewBox="0 0 600 120" preserveAspectRatio="none" aria-hidden="true" focusable="false"></svg>
-            <figcaption id="forecast-caption" class="help"></figcaption>
+          <figure class="forecast" aria-labelledby="forecast-caption">
+            <figcaption id="forecast-caption" class="forecast__caption"></figcaption>
+            <div id="forecast-chart" class="bars" aria-hidden="true"></div>
+            <ul class="bars__key" aria-hidden="true">
+              <li><span class="swatch swatch--cleanest"></span>Cleanest hour</li>
+              <li><span class="swatch swatch--smoggiest"></span>Smoggiest hour</li>
+            </ul>
+            <details class="forecast__details">
+              <summary>Hourly values</summary>
+              <table class="forecast__table">
+                <thead><tr><th scope="col">Time</th><th scope="col">PM2.5 (µg/m³)</th></tr></thead>
+                <tbody id="forecast-rows"></tbody>
+              </table>
+            </details>
           </figure>
         </div>
 

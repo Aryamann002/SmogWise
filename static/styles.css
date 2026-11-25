@@ -1,6 +1,7 @@
 /* SmogWise styles: tokens, base, layout, landing sections, form, results, motion, print.
-   Story: thick winter smog (amber haze) clearing into clean air (teal). Dark by default,
-   with a light theme for users who ask for one. Every text colour pairing meets WCAG AA. */
+   "Clear sky" palette: calm whites and sky blue for clean air, with rose as the only warm
+   colour, kept for smog and warnings. Light by default, with a matching dark theme.
+   Every text colour pairing meets WCAG AA. */
 
 @font-face {
   font-family: "Bricolage Grotesque";
@@ -12,25 +13,29 @@
 }
 
 :root {
-  color-scheme: dark;
-  --bg: #0c1620;
-  --bg-tint: #0f1c28;
-  --surface: #13212d;
-  --surface-2: #1a2c3a;
-  --border: #27404f;
-  --text: #e6eef3;
-  --muted: #9fb3c1;
-  --clean: #2dd4bf;
-  --haze: #f5a524;
-  --sky: #7dd3fc;
-  --on-clean: #04201c;
-  --focus: #7dd3fc;
-  --danger-bg: #3a1717;
-  --danger-text: #ffb4b4;
-  --haze-glow: rgb(245 165 36 / 22%);
-  --smog-glow: rgb(148 163 184 / 18%);
-  --clean-glow: rgb(45 212 191 / 16%);
-  --header-bg: rgb(12 22 32 / 82%);
+  color-scheme: light;
+  --bg: #f7fafc;
+  --bg-tint: #eef4f9;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --border: #d6e0ea;
+  --text: #0f172a;
+  --muted: #475569;
+  --clean: #0369a1;
+  --haze: #be123c;
+  --sky: #075985;
+  /* Chart marks: pale context columns, two highlighted hours (dataviz palette validator). */
+  --chart-bar: #7dd3fc;
+  --chart-cleanest: #0369a1;
+  --chart-smoggiest: #be123c;
+  --on-clean: #ffffff;
+  --focus: #1d4ed8;
+  --danger-bg: #fff1f2;
+  --danger-text: #9f1239;
+  --haze-glow: rgb(225 29 72 / 9%);
+  --smog-glow: rgb(100 116 139 / 12%);
+  --clean-glow: rgb(3 105 161 / 18%);
+  --header-bg: rgb(247 250 252 / 85%);
   /* US EPA AQI colours; text colour chosen per band for WCAG AA contrast. */
   --aqi-0: #00e400;
   --aqi-1: #ffff00;
@@ -47,27 +52,30 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@media (prefers-color-scheme: light) {
+@media (prefers-color-scheme: dark) {
   :root {
-    color-scheme: light;
-    --bg: #f3f7f9;
-    --bg-tint: #e9f1f4;
-    --surface: #ffffff;
-    --surface-2: #eef4f6;
-    --border: #c9d7df;
-    --text: #0c1620;
-    --muted: #45596a;
-    --clean: #0f766e;
-    --haze: #8f5200;
-    --sky: #0b5e8a;
-    --on-clean: #ffffff;
-    --focus: #1a56db;
-    --danger-bg: #fdecec;
-    --danger-text: #8a1c1c;
-    --haze-glow: rgb(245 165 36 / 20%);
-    --smog-glow: rgb(100 116 139 / 16%);
-    --clean-glow: rgb(45 212 191 / 18%);
-    --header-bg: rgb(243 247 249 / 85%);
+    color-scheme: dark;
+    --bg: #0b1220;
+    --bg-tint: #0e172a;
+    --surface: #111c30;
+    --surface-2: #17243b;
+    --border: #26364f;
+    --text: #e2e8f0;
+    --muted: #a3b3c9;
+    --clean: #38bdf8;
+    --haze: #fb7185;
+    --sky: #7dd3fc;
+    --chart-bar: #24496b;
+    --chart-cleanest: #1d9bd8;
+    --chart-smoggiest: #e8586f;
+    --on-clean: #04263a;
+    --focus: #93c5fd;
+    --danger-bg: #3b1220;
+    --danger-text: #fecdd3;
+    --haze-glow: rgb(251 113 133 / 10%);
+    --smog-glow: rgb(148 163 184 / 10%);
+    --clean-glow: rgb(56 189 248 / 16%);
+    --header-bg: rgb(11 18 32 / 85%);
   }
 }
 
@@ -139,7 +147,6 @@ main:focus { outline: none; }
 
 .text-clean { color: var(--clean); }
 .text-haze { color: var(--haze); }
-.text-sky { color: var(--sky); }
 
 /* --- Header --------------------------------------------------------------------------- */
 
@@ -424,7 +431,7 @@ main:focus { outline: none; }
   background: color-mix(in srgb, var(--surface) 88%, transparent);
   border: 1px solid var(--border);
   border-radius: calc(var(--radius) * 1.5);
-  box-shadow: 0 1.5rem 4rem var(--haze-glow);
+  box-shadow: 0 1.5rem 4rem var(--smog-glow);
 }
 
 .air-preview__head {
@@ -443,32 +450,86 @@ main:focus { outline: none; }
   font-weight: 650;
 }
 
-.air-preview__chart {
-  display: block;
-  width: 100%;
-  height: auto;
-  margin-block: 1.25rem;
-  overflow: visible;
+.air-preview .bars { margin-top: 1.5rem; }
+.air-preview .bars__key { margin-bottom: 1.25rem; }
+
+/* --- Hourly PM2.5 column chart (built by renderBars in app.js) ------------------------- */
+
+.bars__plot {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  align-items: end;
+  gap: 2px;
+  height: 9rem;
+  border-bottom: 1px solid var(--border);
 }
 
-.air-preview__area,
-.forecast__area { fill: color-mix(in srgb, var(--haze) 12%, transparent); }
+.bars--compact .bars__plot { height: 7rem; }
 
-.air-preview__line {
-  fill: none;
-  stroke: var(--haze);
-  stroke-width: 3;
-  stroke-linecap: round;
+.bars__bar {
+  position: relative;
+  justify-self: center;
+  width: min(100%, 1.5rem);
+  height: calc(var(--value) * 100%);
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: var(--chart-bar);
+  transform-origin: bottom;
 }
 
-.air-preview__worst,
-.air-preview__best {
-  transform-box: fill-box;
-  transform-origin: center;
+.bars__bar--cleanest { background: var(--chart-cleanest); }
+.bars__bar--smoggiest { background: var(--chart-smoggiest); }
+
+.bars__bar:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 0.4rem);
+  left: 50%;
+  z-index: 1;
+  transform: translateX(-50%);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.4rem;
+  background: var(--text);
+  color: var(--surface);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
-.air-preview__worst { fill: var(--haze); }
-.air-preview__best { fill: var(--clean); }
+.bars__axis {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bars__key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.bars__key li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 3px;
+}
+
+.swatch--cleanest { background: var(--chart-cleanest); }
+.swatch--smoggiest { background: var(--chart-smoggiest); }
 
 .air-preview__stats,
 .stats,
@@ -802,22 +863,33 @@ select:disabled { opacity: 0.7; }
 
 .forecast { margin: 0; }
 
-.forecast__chart {
-  display: block;
-  width: 100%;
-  height: 8rem;
+.forecast__caption {
+  margin-bottom: 1rem;
+  font-weight: 600;
 }
 
-.forecast__line {
-  fill: none;
-  stroke: var(--haze);
-  stroke-width: 3;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
+.forecast__details summary {
+  cursor: pointer;
+  color: var(--sky);
+  font-weight: 650;
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
 }
 
-.forecast__best { fill: var(--clean); }
-.forecast__worst { fill: var(--haze); }
+.forecast__table {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.forecast__table th,
+.forecast__table td {
+  padding: 0.25rem 1.5rem 0.25rem 0;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.forecast__table tbody th { font-weight: 500; }
 
 .summary {
   margin-block: 2rem;
@@ -994,14 +1066,8 @@ select:disabled { opacity: 0.7; }
 
   .pulse::after { animation: ping 2.4s var(--ease-out) infinite; }
 
-  .air-preview__line {
-    stroke-dasharray: 1;
-    animation: draw 1.8s var(--ease-out) 0.3s both;
-  }
-
-  .air-preview__area { animation: fade-in 1.2s ease 1s both; }
-  .air-preview__worst { animation: pop 0.5s var(--ease-out) 1.4s both; }
-  .air-preview__best { animation: pop 0.5s var(--ease-out) 1.8s both, breathe 3s ease-in-out 2.3s infinite; }
+  /* Columns grow from the baseline one hour after another. */
+  .bars__bar { animation: grow 0.6s var(--ease-out) calc(var(--index) * 30ms) both; }
 
   .button { transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out); }
   .button:not(:disabled):hover { transform: translateY(-2px); }
@@ -1010,7 +1076,6 @@ select:disabled { opacity: 0.7; }
   .card:hover { transform: translateY(-4px); border-color: var(--clean); }
 
   .results:not([hidden]) .aqi-badge { animation: pop 0.6s var(--ease-out) both; }
-  .results:not([hidden]) .forecast__chart { animation: wipe 1.4s var(--ease-out) both; }
   .results:not([hidden]) .routine__step,
   .results:not([hidden]) .action { animation: rise 0.6s var(--ease-out) both; }
 
@@ -1045,26 +1110,12 @@ select:disabled { opacity: 0.7; }
   to { transform: scale(3); opacity: 0; }
 }
 
-@keyframes draw {
-  from { stroke-dashoffset: 1; }
-  to { stroke-dashoffset: 0; }
-}
-
-@keyframes wipe {
-  from { clip-path: inset(0 100% 0 0); }
-  to { clip-path: inset(0); }
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
+@keyframes grow {
+  from { transform: scaleY(0); }
 }
 
 @keyframes pop {
   from { transform: scale(0.6); opacity: 0; }
-}
-
-@keyframes breathe {
-  50% { transform: scale(1.35); }
 }
 
 @keyframes rise {
@@ -1086,15 +1137,19 @@ select:disabled { opacity: 0.7; }
     --border: #cccccc;
     --text: #000000;
     --muted: #333333;
-    --clean: #0f766e;
-    --haze: #8f5200;
-    --sky: #0b5e8a;
+    --clean: #0369a1;
+    --haze: #be123c;
+    --sky: #075985;
+    --chart-bar: #7dd3fc;
+    --chart-cleanest: #0369a1;
+    --chart-smoggiest: #be123c;
   }
 
   .site-header,
   .site-footer,
   .skip-link,
   main > section:not(.results),
+  .forecast__details,
   #print-button {
     display: none;
   }
